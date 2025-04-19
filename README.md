@@ -27,10 +27,15 @@ The author assumes no responsibility for any misuse of this information or scrip
 - Reply-To address customization
 - HTML email templates
 - Debug mode for troubleshooting
+- Bulk testing of SMTP servers from a file
+- Multi-threaded SMTP server testing
+- Colorized console output
 
 ## Requirements
 
 - Python 3.6 or later
+- Required Python packages:
+  - colorama
 - Access to an SMTP server (most email providers will require authentication)
 - SMTP server that allows header manipulation (many public email services now block this)
 
@@ -39,6 +44,7 @@ The author assumes no responsibility for any misuse of this information or scrip
 ```bash
 git clone https://github.com/Triotion/email-spoofing.git
 cd email-spoofing
+pip install colorama
 ```
 
 ## Basic Usage
@@ -47,17 +53,64 @@ cd email-spoofing
 python email_spoofer.py --server smtp.example.com --port 587 --user your_email@example.com --password your_password --from-name "Spoofed Name" --from-email spoofed@example.com --to recipient@example.com --subject "Test Subject" --message "<h1>This is a test</h1><p>This email demonstrates spoofing.</p>"
 ```
 
-### Arguments
+### Using SMTP Server File
 
+You can provide multiple SMTP servers in a file and the script will test them all to find working ones:
+
+```bash
+python advanced_email_spoofer.py --smtp-file smtp_servers.txt --from-name "Spoofed Name" --from-email spoofed@example.com --to recipient@example.com --subject "Test Subject" --message "This is a test message"
+```
+
+The SMTP server file format is simple:
+```
+host|port|username|password
+```
+
+For example:
+```
+smtp.example.com|587|user@example.com|password123
+smtp.another.com|465|admin@another.com|securepass
+```
+
+### Advanced SMTP Testing 
+
+You can test which SMTP servers are working without sending emails:
+
+```bash
+python advanced_email_spoofer.py --smtp-file smtp_servers.txt --test-only --threads 10
+```
+
+This will:
+1. Test all SMTP servers in the file
+2. Use 10 threads to speed up the testing process
+3. Show which servers are working
+4. Exit without sending any emails
+
+### Command Line Arguments
+
+#### SMTP Settings:
 - `--server`: SMTP server address
 - `--port`: SMTP server port (default: 587)
 - `--user`: SMTP username (typically your real email)
 - `--password`: SMTP password
+- `--smtp-file`: File containing SMTP credentials in format "host|port|username|password"
+- `--test-only`: Only test SMTP servers, don't send emails
+- `--threads`: Number of threads for testing SMTP servers (default: 5)
+- `--debug`: SMTP debug level (0-2)
+
+#### Spoofing Parameters:
 - `--from-name`: Display name you want to show as the sender
 - `--from-email`: Email address you want to show as the sender
-- `--to`: Recipient's email address
+- `--reply-to`: Reply-to email address
+- `--to`: Recipient email(s), comma separated
+- `--cc`: CC recipient(s), comma separated
+- `--bcc`: BCC recipient(s), comma separated
 - `--subject`: Email subject
 - `--message`: Email body content (HTML supported)
+- `--plain-text`: Send as plain text instead of HTML
+- `--attach`: File(s) to attach (can be used multiple times)
+- `--add-xheaders`: Add fake X-headers to make email look more legitimate
+- `--custom-header`: Add custom header in format "Header:Value" (can be used multiple times)
 
 ## Usage Examples
 
@@ -133,38 +186,27 @@ python advanced_email_spoofer.py \
   --custom-header "Precedence: bulk"
 ```
 
-#### Example 3: Sending to multiple recipients with attachments
+#### Example 3: Using SMTP servers from a file
 
 ```bash
 python advanced_email_spoofer.py \
-  --server smtp.example.com \
-  --port 587 \
-  --user your_real_email@example.com \
-  --password your_password \
+  --smtp-file smtp_servers.txt \
   --from-name "HR Department" \
   --from-email hr@company.com \
   --to "employee1@example.com,employee2@example.com" \
   --cc "manager@example.com" \
   --subject "Updated Company Policy" \
   --message "<p>Please find attached the updated company policy document.</p><p>All employees must read and acknowledge by Friday.</p>" \
-  --attach policy_document.pdf \
-  --attach acknowledgment_form.docx
+  --attach policy_document.pdf
 ```
 
-#### Example 4: Debug mode for troubleshooting
+#### Example 4: Testing SMTP servers only
 
 ```bash
 python advanced_email_spoofer.py \
-  --server smtp.example.com \
-  --port 587 \
-  --user your_real_email@example.com \
-  --password your_password \
-  --from-name "John Smith" \
-  --from-email john.smith@trusted-company.com \
-  --to victim@example.com \
-  --subject "Testing" \
-  --message "This is a test email." \
-  --debug 2
+  --smtp-file smtp_servers.txt \
+  --test-only \
+  --threads 10
 ```
 
 ## Why This Doesn't Always Work
@@ -217,7 +259,7 @@ If you find this tool valuable, consider donating to support ongoing development
 
 ## Author
 
-Created by [@Triotion](https://github.com/Triotion/)
+Created by [@Triotion](https://github.com/Triotion/) - [Telegram](https://t.me/Triotion)
 
 ## License
 
