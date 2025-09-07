@@ -25,13 +25,13 @@ By simulating spoofing attempts safely, this project helps raise awareness about
 ---
 
 ## 🌐 User Interface
+<img width="1471" height="745" alt="image" src="https://github.com/user-attachments/assets/a156daa1-41d5-4740-b585-94d536d68d91" />
 
-<img width="500" height="500" alt="UI Screenshot" src="https://github.com/user-attachments/assets/ba456e0f-6708-4e0e-ae36-fd9635dd9465" />
 
 The tool includes a built-in scanning feature that analyzes a domain or website to quickly identify if it is vulnerable to spoofing.  
 After scanning, it provides **clear results** and **actionable recommendations** to help users improve email security.
 
----
+
 
 ## 🚀 Features
 
@@ -201,5 +201,6 @@ Based on the command-line email spoofing tool developed by Triotion.
 ---
 
 **Remember: Use responsibly and only for legitimate educational purposes!**
+
 
 
