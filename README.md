@@ -1,3 +1,5 @@
+<img width="250" height="250" alt="favicon" src="https://github.com/user-attachments/assets/7e97acdc-1d9d-4d88-9400-153b3f6ed4cf" />
+
 # 🛡️ Email Spoofing Security Project  
 
 [![Python](https://img.shields.io/badge/python-3.7%2B-blue?logo=python)](https://www.python.org/) 
@@ -25,7 +27,7 @@ By simulating spoofing attempts safely, this project helps raise awareness about
 ---
 
 ## 🌐 User Interface
-<img width="1471" height="745" alt="image" src="https://github.com/user-attachments/assets/a156daa1-41d5-4740-b585-94d536d68d91" />
+<img width="1539" height="975" alt="{7A2FCB82-A039-4435-9B42-601C9F861E75}" src="https://github.com/user-attachments/assets/6d58d800-debf-4492-9a54-3aa4eb99da1b" />
 
 
 The tool includes a built-in scanning feature that analyzes a domain or website to quickly identify if it is vulnerable to spoofing.  
@@ -36,7 +38,8 @@ After scanning, it provides **clear results** and **actionable recommendations**
 ## 🚀 Features
 
 - **Modern Web Interface**: Clean, responsive design using Bootstrap 5  
-- **Email Spoofing**: Send emails with spoofed sender information  
+- **Email Spoofing**: Send emails with spoofed sender information
+- **Email Header Analysis**: Deep analysis of email headers with security scoring
 - **SMTP Testing**: Test individual SMTP server connections  
 - **Batch Server Testing**: Test multiple SMTP servers from a file  
 - **File Attachments**: Supports various file types  
@@ -205,6 +208,7 @@ Based on the command-line email spoofing tool developed by Triotion.
 ---
 
 **Remember: Use responsibly and only for legitimate educational purposes!**
+
 
 
 
