@@ -26,6 +26,11 @@ from werkzeug.utils import secure_filename
 import tempfile
 import dns.resolver
 import dns.exception
+import re
+import base64
+import json
+from datetime import datetime
+import hashlib
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-here'  # Change this in production
@@ -452,6 +457,354 @@ def check_domain_spoofing(domain):
     
     return analysis
 
+def check_dkim_records(domain, selectors=None):
+    """
+    Check DKIM records for a domain
+    
+    Args:
+        domain (str): Domain name to check
+        selectors (list, optional): List of DKIM selectors to check
+        
+    Returns:
+        dict: DKIM analysis results
+    """
+    if selectors is None:
+        # Common DKIM selectors
+        selectors = ['default', 'google', 'k1', 'k2', 'mail', 'dkim', 's1', 's2', 
+                    'selector1', 'selector2', 'dk', 'key1', 'key2']
+    
+    analysis = {
+        'domain': domain,
+        'selectors_found': [],
+        'selectors_checked': len(selectors),
+        'total_keys': 0,
+        'valid_keys': 0,
+        'summary': '',
+        'recommendations': []
+    }
+    
+    try:
+        for selector in selectors:
+            dkim_domain = f"{selector}._domainkey.{domain}"
+            try:
+                dkim_records = dns.resolver.resolve(dkim_domain, 'TXT')
+                for record in dkim_records:
+                    record_text = str(record).strip('"')
+                    if 'k=' in record_text or 'p=' in record_text:
+                        # Parse DKIM record
+                        dkim_data = parse_dkim_record(record_text)
+                        dkim_data['selector'] = selector
+                        dkim_data['record'] = record_text
+                        analysis['selectors_found'].append(dkim_data)
+                        analysis['total_keys'] += 1
+                        
+                        if dkim_data.get('valid', False):
+                            analysis['valid_keys'] += 1
+                        break
+            except dns.exception.DNSException:
+                continue
+        
+        # Generate summary
+        if analysis['selectors_found']:
+            analysis['summary'] = f"Found {len(analysis['selectors_found'])} DKIM selector(s) with {analysis['valid_keys']} valid key(s)."
+            if analysis['valid_keys'] > 0:
+                analysis['recommendations'].append('DKIM is properly configured for email authentication.')
+            if analysis['valid_keys'] < analysis['total_keys']:
+                analysis['recommendations'].append('Some DKIM keys may be invalid or expired. Review key configuration.')
+        else:
+            analysis['summary'] = 'No DKIM records found. Email authentication may be limited.'
+            analysis['recommendations'].append('Consider implementing DKIM for better email authentication.')
+            
+    except Exception as e:
+        analysis['summary'] = f'Error checking DKIM records: {str(e)}'
+        analysis['recommendations'] = ['Unable to check DKIM records due to an error.']
+    
+    return analysis
+
+def parse_dkim_record(record_text):
+    """Parse DKIM record into components"""
+    dkim_data = {
+        'version': None,
+        'algorithm': None,
+        'key_type': None,
+        'public_key': None,
+        'service_types': None,
+        'flags': None,
+        'notes': None,
+        'valid': False
+    }
+    
+    # Parse key-value pairs
+    pairs = re.findall(r'([a-z]+)=([^;]+)', record_text.lower())
+    
+    for key, value in pairs:
+        value = value.strip()
+        if key == 'v':
+            dkim_data['version'] = value
+        elif key == 'k':
+            dkim_data['key_type'] = value
+        elif key == 'h':
+            dkim_data['algorithm'] = value
+        elif key == 'p':
+            dkim_data['public_key'] = value
+            # Basic validation - check if key is not empty and looks like base64
+            if value and len(value) > 50:
+                try:
+                    base64.b64decode(value + '==')  # Add padding for validation
+                    dkim_data['valid'] = True
+                except:
+                    pass
+        elif key == 's':
+            dkim_data['service_types'] = value
+        elif key == 't':
+            dkim_data['flags'] = value
+        elif key == 'n':
+            dkim_data['notes'] = value
+    
+    return dkim_data
+
+def analyze_email_headers(headers_text):
+    """
+    Analyze email headers for authenticity and security
+    
+    Args:
+        headers_text (str): Raw email headers
+        
+    Returns:
+        dict: Header analysis results
+    """
+    analysis = {
+        'spf_result': None,
+        'dkim_result': None,
+        'dmarc_result': None,
+        'authentication_results': [],
+        'received_chain': [],
+        'suspicious_indicators': [],
+        'security_score': 0,
+        'summary': '',
+        'recommendations': []
+    }
+    
+    try:
+        headers = parse_email_headers(headers_text)
+        
+        # Check authentication results
+        auth_results = headers.get('authentication-results', [])
+        if isinstance(auth_results, str):
+            auth_results = [auth_results]
+            
+        for auth_result in auth_results:
+            analysis['authentication_results'].append(auth_result)
+            
+            # Parse SPF results
+            if 'spf=' in auth_result.lower():
+                spf_match = re.search(r'spf=([a-z]+)', auth_result.lower())
+                if spf_match:
+                    analysis['spf_result'] = spf_match.group(1)
+            
+            # Parse DKIM results
+            if 'dkim=' in auth_result.lower():
+                dkim_match = re.search(r'dkim=([a-z]+)', auth_result.lower())
+                if dkim_match:
+                    analysis['dkim_result'] = dkim_match.group(1)
+            
+            # Parse DMARC results
+            if 'dmarc=' in auth_result.lower():
+                dmarc_match = re.search(r'dmarc=([a-z]+)', auth_result.lower())
+                if dmarc_match:
+                    analysis['dmarc_result'] = dmarc_match.group(1)
+        
+        # Analyze received headers for routing
+        received_headers = headers.get('received', [])
+        if isinstance(received_headers, str):
+            received_headers = [received_headers]
+            
+        for received in received_headers:
+            analysis['received_chain'].append(received.strip())
+        
+        # Check for suspicious indicators
+        check_suspicious_headers(headers, analysis)
+        
+        # Calculate security score
+        analysis['security_score'] = calculate_security_score(analysis)
+        
+        # Generate summary and recommendations
+        generate_header_analysis_summary(analysis)
+        
+    except Exception as e:
+        analysis['summary'] = f'Error analyzing headers: {str(e)}'
+        analysis['recommendations'] = ['Unable to analyze email headers due to an error.']
+    
+    return analysis
+
+def parse_email_headers(headers_text):
+    """Parse raw email headers into dictionary"""
+    headers = {}
+    current_header = None
+    current_value = []
+    
+    for line in headers_text.split('\n'):
+        if line.startswith(' ') or line.startswith('\t'):
+            # Continuation of previous header
+            if current_header:
+                current_value.append(line.strip())
+        else:
+            # Save previous header
+            if current_header:
+                header_name = current_header.lower()
+                header_value = ' '.join(current_value)
+                if header_name in headers:
+                    if isinstance(headers[header_name], list):
+                        headers[header_name].append(header_value)
+                    else:
+                        headers[header_name] = [headers[header_name], header_value]
+                else:
+                    headers[header_name] = header_value
+            
+            # Start new header
+            if ':' in line:
+                current_header, value = line.split(':', 1)
+                current_header = current_header.strip()
+                current_value = [value.strip()]
+            else:
+                current_header = None
+                current_value = []
+    
+    # Save last header
+    if current_header:
+        header_name = current_header.lower()
+        header_value = ' '.join(current_value)
+        if header_name in headers:
+            if isinstance(headers[header_name], list):
+                headers[header_name].append(header_value)
+            else:
+                headers[header_name] = [headers[header_name], header_value]
+        else:
+            headers[header_name] = header_value
+    
+    return headers
+
+def check_suspicious_headers(headers, analysis):
+    """Check for suspicious header indicators"""
+    suspicious_patterns = [
+        ('x-originating-ip', 'Suspicious originating IP patterns'),
+        ('x-mailer', 'Suspicious mailer identification'),
+        ('message-id', 'Suspicious or missing Message-ID'),
+        ('return-path', 'Mismatched return path'),
+    ]
+    
+    for header_name, description in suspicious_patterns:
+        if header_name in headers:
+            header_value = headers[header_name]
+            if isinstance(header_value, list):
+                header_value = header_value[0]
+            
+            # Add specific checks here
+            if header_name == 'message-id' and not header_value:
+                analysis['suspicious_indicators'].append(f'{description}: Missing Message-ID')
+
+def calculate_security_score(analysis):
+    """Calculate security score based on authentication results"""
+    score = 0
+    
+    if analysis['spf_result'] == 'pass':
+        score += 30
+    elif analysis['spf_result'] == 'fail':
+        score -= 20
+    
+    if analysis['dkim_result'] == 'pass':
+        score += 30
+    elif analysis['dkim_result'] == 'fail':
+        score -= 20
+    
+    if analysis['dmarc_result'] == 'pass':
+        score += 40
+    elif analysis['dmarc_result'] == 'fail':
+        score -= 30
+    
+    # Penalize suspicious indicators
+    score -= len(analysis['suspicious_indicators']) * 10
+    
+    return max(0, min(100, score))
+
+def generate_header_analysis_summary(analysis):
+    """Generate summary and recommendations for header analysis"""
+    if analysis['security_score'] >= 80:
+        analysis['summary'] = 'Email appears authentic with strong authentication.'
+    elif analysis['security_score'] >= 60:
+        analysis['summary'] = 'Email has moderate authentication but may have some concerns.'
+    elif analysis['security_score'] >= 40:
+        analysis['summary'] = 'Email has weak authentication and potential security issues.'
+    else:
+        analysis['summary'] = 'Email shows signs of potential spoofing or security issues.'
+    
+    # Add specific recommendations
+    if not analysis['spf_result']:
+        analysis['recommendations'].append('No SPF authentication result found.')
+    elif analysis['spf_result'] == 'fail':
+        analysis['recommendations'].append('SPF authentication failed - sender may be unauthorized.')
+    
+    if not analysis['dkim_result']:
+        analysis['recommendations'].append('No DKIM authentication result found.')
+    elif analysis['dkim_result'] == 'fail':
+        analysis['recommendations'].append('DKIM signature verification failed.')
+    
+    if not analysis['dmarc_result']:
+        analysis['recommendations'].append('No DMARC authentication result found.')
+    elif analysis['dmarc_result'] == 'fail':
+        analysis['recommendations'].append('DMARC policy check failed.')
+
+def check_multiple_domains(domains_list):
+    """
+    Check multiple domains for spoofing vulnerability
+    
+    Args:
+        domains_list (list): List of domain names
+        
+    Returns:
+        dict: Results for all domains
+    """
+    results = {
+        'domains': [],
+        'total_checked': 0,
+        'vulnerable_count': 0,
+        'secure_count': 0,
+        'partially_secure_count': 0,
+        'summary': ''
+    }
+    
+    try:
+        for domain in domains_list:
+            domain = domain.strip()
+            if not domain:
+                continue
+                
+            # Clean domain
+            domain = domain.replace('http://', '').replace('https://', '').replace('www.', '')
+            if '/' in domain:
+                domain = domain.split('/')[0]
+            
+            # Check domain
+            domain_analysis = check_domain_spoofing(domain)
+            results['domains'].append(domain_analysis)
+            results['total_checked'] += 1
+            
+            # Count by status
+            if domain_analysis['overall_status'] == 'vulnerable':
+                results['vulnerable_count'] += 1
+            elif domain_analysis['overall_status'] == 'secure':
+                results['secure_count'] += 1
+            elif domain_analysis['overall_status'] == 'partially_secure':
+                results['partially_secure_count'] += 1
+        
+        # Generate summary
+        results['summary'] = f"Checked {results['total_checked']} domains: {results['secure_count']} secure, {results['partially_secure_count']} potentially spoofable, {results['vulnerable_count']} vulnerable"
+        
+    except Exception as e:
+        results['summary'] = f'Error checking domains: {str(e)}'
+    
+    return results
+
 @app.route('/')
 def index():
     """Main page"""
@@ -638,6 +991,267 @@ def check_spoofing():
         
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/check_dkim', methods=['POST'])
+def check_dkim():
+    """Check DKIM records for a domain"""
+    try:
+        data = request.get_json()
+        domain = data.get('domain', '').strip()
+        selectors = data.get('selectors', None)
+        
+        if not domain:
+            return jsonify({'success': False, 'error': 'Domain is required'})
+        
+        # Clean domain
+        domain = domain.replace('http://', '').replace('https://', '').replace('www.', '')
+        if '/' in domain:
+            domain = domain.split('/')[0]
+        
+        # Check DKIM records
+        analysis = check_dkim_records(domain, selectors)
+        
+        return jsonify({
+            'success': True,
+            'analysis': analysis
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/analyze_headers', methods=['POST'])
+def analyze_headers():
+    """Analyze email headers"""
+    try:
+        data = request.get_json()
+        headers_text = data.get('headers', '').strip()
+        
+        if not headers_text:
+            return jsonify({'success': False, 'error': 'Email headers are required'})
+        
+        # Analyze headers
+        analysis = analyze_email_headers(headers_text)
+        
+        return jsonify({
+            'success': True,
+            'analysis': analysis
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/check_multiple_domains', methods=['POST'])
+def check_multiple_domains_endpoint():
+    """Check multiple domains for spoofing vulnerability"""
+    try:
+        data = request.get_json()
+        domains_text = data.get('domains', '').strip()
+        
+        if not domains_text:
+            return jsonify({'success': False, 'error': 'Domain list is required'})
+        
+        # Parse domains (one per line or comma-separated)
+        domains_list = []
+        for line in domains_text.replace(',', '\n').split('\n'):
+            domain = line.strip()
+            if domain:
+                domains_list.append(domain)
+        
+        if not domains_list:
+            return jsonify({'success': False, 'error': 'No valid domains found'})
+        
+        # Check domains
+        results = check_multiple_domains(domains_list)
+        
+        return jsonify({
+            'success': True,
+            'results': results
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+
+
+@app.route('/generate_report', methods=['POST'])
+def generate_report():
+    """Generate security assessment report"""
+    try:
+        data = request.get_json()
+        report_data = data.get('data', {})
+        report_format = data.get('format', 'html')  # html or json
+        
+        if not report_data:
+            return jsonify({'success': False, 'error': 'Report data is required'})
+        
+        # Generate report
+        if report_format == 'html':
+            report_html = generate_html_report(report_data)
+            return jsonify({
+                'success': True,
+                'report': report_html,
+                'format': 'html'
+            })
+        else:
+            return jsonify({
+                'success': True,
+                'report': report_data,
+                'format': 'json'
+            })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+def generate_html_report(data):
+    """Generate HTML security assessment report"""
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    
+    html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Email Security Assessment Report</title>
+        <style>
+            body {{ font-family: Arial, sans-serif; margin: 20px; }}
+            .header {{ background: #2B3A67; color: white; padding: 20px; border-radius: 5px; }}
+            .section {{ margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }}
+            .secure {{ background: #d4edda; border-color: #c3e6cb; }}
+            .warning {{ background: #fff3cd; border-color: #ffeaa7; }}
+            .danger {{ background: #f8d7da; border-color: #f5c6cb; }}
+            .summary {{ font-size: 18px; margin: 10px 0; }}
+            .recommendations {{ margin: 10px 0; }}
+            .recommendations li {{ margin: 5px 0; }}
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>Email Security Assessment Report</h1>
+            <p>Generated on {timestamp}</p>
+        </div>
+    """
+    
+    # Add domain analysis if present
+    if 'domain' in data:
+        domain_data = data['domain']
+        status_class = 'secure' if domain_data['overall_status'] == 'secure' else 'warning' if domain_data['overall_status'] == 'partially_secure' else 'danger'
+        
+        html += f"""
+        <div class="section {status_class}">
+            <h2>Domain Security Analysis: {domain_data['domain']}</h2>
+            <div class="summary">{domain_data['summary']}</div>
+            <h3>SPF Record</h3>
+            <p>Status: {domain_data['spf']['status']}</p>
+            <p>Vulnerable: {'Yes' if domain_data['spf']['vulnerable'] else 'No'}</p>
+            <h3>DMARC Record</h3>
+            <p>Status: {domain_data['dmarc']['status']}</p>
+            <p>Policy: {domain_data['dmarc']['policy'] or 'Not found'}</p>
+            <p>Subdomain Policy: {domain_data['dmarc']['subdomain_policy'] or 'Inherits primary'}</p>
+            <p>Vulnerable: {'Yes' if domain_data['dmarc']['vulnerable'] else 'No'}</p>
+            <p>Subdomains Vulnerable: {'Yes' if domain_data['dmarc']['subdomain_vulnerable'] else 'No'}</p>
+            <div class="recommendations">
+                <h3>Recommendations</h3>
+                <ul>
+        """
+        
+        for rec in domain_data['recommendations']:
+            html += f"<li>{rec}</li>"
+        
+        html += """
+                </ul>
+            </div>
+        </div>
+        """
+    
+    # Add DKIM analysis if present
+    if 'dkim' in data:
+        dkim_data = data['dkim']
+        html += f"""
+        <div class="section">
+            <h2>DKIM Analysis: {dkim_data['domain']}</h2>
+            <div class="summary">{dkim_data['summary']}</div>
+            <p>Selectors Found: {len(dkim_data['selectors_found'])}</p>
+            <p>Valid Keys: {dkim_data['valid_keys']}/{dkim_data['total_keys']}</p>
+        """
+        
+        for selector in dkim_data['selectors_found']:
+            html += f"""
+            <h3>Selector: {selector['selector']}</h3>
+            <p>Valid: {'Yes' if selector['valid'] else 'No'}</p>
+            <p>Key Type: {selector['key_type'] or 'Not specified'}</p>
+            <p>Algorithm: {selector['algorithm'] or 'Not specified'}</p>
+            """
+        
+        html += """
+        </div>
+        """
+    
+    # Add header analysis if present
+    if 'headers' in data:
+        headers_data = data['headers']
+        score_class = 'secure' if headers_data['security_score'] >= 80 else 'warning' if headers_data['security_score'] >= 60 else 'danger'
+        
+        html += f"""
+        <div class="section {score_class}">
+            <h2>Email Header Analysis</h2>
+            <div class="summary">{headers_data['summary']}</div>
+            <p>Security Score: {headers_data['security_score']}/100</p>
+            <p>SPF Result: {headers_data['spf_result'] or 'Not found'}</p>
+            <p>DKIM Result: {headers_data['dkim_result'] or 'Not found'}</p>
+            <p>DMARC Result: {headers_data['dmarc_result'] or 'Not found'}</p>
+        </div>
+        """
+    
+    # Add multi-domain analysis if present
+    if 'multi-domain' in data:
+        multi_data = data['multi-domain']
+        html += f"""
+        <div class="section">
+            <h2>Multi-Domain Security Analysis</h2>
+            <div class="summary">{multi_data['summary']}</div>
+            <p>Total Domains: {multi_data['total_checked']}</p>
+            <p>Secure: {multi_data['secure_count']}</p>
+            <p>Potentially Spoofable: {multi_data['partially_secure_count']}</p>
+            <p>Vulnerable: {multi_data['vulnerable_count']}</p>
+            
+            <h3>Domain Results</h3>
+            <table border="1" style="border-collapse: collapse; width: 100%;">
+                <thead>
+                    <tr>
+                        <th style="padding: 8px;">Domain</th>
+                        <th style="padding: 8px;">Status</th>
+                        <th style="padding: 8px;">SPF</th>
+                        <th style="padding: 8px;">DMARC</th>
+                        <th style="padding: 8px;">Subdomain Vulnerable</th>
+                    </tr>
+                </thead>
+                <tbody>
+        """
+        
+        for domain in multi_data['domains']:
+            status_text = 'Potentially Spoofable' if domain['overall_status'] == 'partially_secure' else domain['overall_status'].upper()
+            html += f"""
+                    <tr>
+                        <td style="padding: 8px;">{domain['domain']}</td>
+                        <td style="padding: 8px;">{status_text}</td>
+                        <td style="padding: 8px;">{domain['spf']['status']}</td>
+                        <td style="padding: 8px;">{domain['dmarc']['policy'] or 'none'}</td>
+                        <td style="padding: 8px;">{'Yes' if domain['dmarc']['subdomain_vulnerable'] else 'No'}</td>
+                    </tr>
+            """
+        
+        html += """
+                </tbody>
+            </table>
+        </div>
+        """
+    
+    html += """
+    </body>
+    </html>
+    """
+    
+    return html
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

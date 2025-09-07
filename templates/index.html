@@ -33,6 +33,16 @@
             <i class="fas fa-shield-alt me-2"></i>Domain Security
         </button>
     </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="dkim-tab" data-bs-toggle="tab" data-bs-target="#dkim" type="button" role="tab">
+            <i class="fas fa-key me-2"></i>DKIM Checker
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="headers-tab" data-bs-toggle="tab" data-bs-target="#headers" type="button" role="tab">
+            <i class="fas fa-code me-2"></i>Header Analysis
+        </button>
+    </li>
 </ul>
 
 <!-- Tab Content -->
@@ -279,14 +289,14 @@
                     <div class="card-body">
                         <form id="spoofForm">
                             <div class="mb-3">
-                                <label for="domain_check" class="form-label">Domain Name</label>
+                                <label for="domain_check" class="form-label">Domain Name(s)</label>
                                 <input type="text" class="form-control" id="domain_check" name="domain" 
-                                       placeholder="example.com" required>
-                                <div class="form-text">Check SPF and DMARC records for spoofing vulnerability</div>
+                                       placeholder="example.com, google.com, microsoft.com" required>
+                                <div class="form-text">Single domain or comma-separated list for bulk analysis</div>
                             </div>
                             <div class="d-grid">
                                 <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-shield-alt me-2"></i>Check Domain
+                                    <i class="fas fa-shield-alt me-2"></i>Check Domain(s)
                                 </button>
                             </div>
                         </form>
@@ -298,6 +308,7 @@
                                 <li><i class="fas fa-check text-success me-2"></i>DMARC records and policies</li>
                                 <li><i class="fas fa-check text-success me-2"></i>Subdomain policy inheritance</li>
                                 <li><i class="fas fa-check text-success me-2"></i>Spoofing vulnerability assessment</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Bulk analysis with summary statistics</li>
                             </ul>
                         </div>
                     </div>
@@ -307,6 +318,126 @@
                 <div id="spoofResults" style="display: none;">
                     <div id="spoofAnalysis"></div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DKIM Checker Tab -->
+    <div class="tab-pane fade" id="dkim" role="tabpanel">
+        <div class="row">
+            <div class="col-lg-5">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">DKIM Record Checker</h3>
+                    </div>
+                    <div class="card-body">
+                        <form id="dkimForm">
+                            <div class="mb-3">
+                                <label for="dkim_domain" class="form-label">Domain Name</label>
+                                <input type="text" class="form-control" id="dkim_domain" name="domain" 
+                                       placeholder="example.com" required>
+                                <div class="form-text">Check DKIM records and selectors</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="dkim_selectors" class="form-label">Custom Selectors (Optional)</label>
+                                <input type="text" class="form-control" id="dkim_selectors" name="selectors" 
+                                       placeholder="selector1,selector2,google">
+                                <div class="form-text">Comma-separated list. Leave empty for common selectors.</div>
+                            </div>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-key me-2"></i>Check DKIM
+                                </button>
+                            </div>
+                        </form>
+                        
+                        <div class="mt-4">
+                            <h6>Common DKIM selectors checked:</h6>
+                            <ul class="list-unstyled small text-muted">
+                                <li><i class="fas fa-check text-success me-2"></i>default, google, k1, k2</li>
+                                <li><i class="fas fa-check text-success me-2"></i>mail, dkim, s1, s2</li>
+                                <li><i class="fas fa-check text-success me-2"></i>selector1, selector2</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-7">
+                <div id="dkimResults" style="display: none;">
+                    <div id="dkimAnalysis"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header Analysis Tab -->
+    <div class="tab-pane fade" id="headers" role="tabpanel">
+        <div class="row">
+            <div class="col-lg-5">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Email Header Analysis</h3>
+                    </div>
+                    <div class="card-body">
+                        <form id="headersForm">
+                            <div class="mb-3">
+                                <label for="email_headers" class="form-label">Email Headers</label>
+                                <textarea class="form-control" id="email_headers" name="headers" rows="10" 
+                                          placeholder="Paste raw email headers here..." required></textarea>
+                                <div class="form-text">Paste the complete email headers for analysis</div>
+                            </div>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search me-2"></i>Analyze Headers
+                                </button>
+                            </div>
+                        </form>
+                        
+                        <div class="mt-4">
+                            <h6>What we analyze:</h6>
+                            <ul class="list-unstyled small text-muted">
+                                <li><i class="fas fa-check text-success me-2"></i>SPF/DKIM/DMARC results</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Email routing chain</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Suspicious indicators</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Security score calculation</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-7">
+                <div id="headersResults" style="display: none;">
+                    <div id="headersAnalysis"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Report Generation Modal -->
+<div class="modal fade" id="reportModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Generate Security Report</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Generate a comprehensive security assessment report based on your analysis results.</p>
+                <div class="mb-3">
+                    <label for="reportFormat" class="form-label">Report Format</label>
+                    <select class="form-select" id="reportFormat">
+                        <option value="html">HTML Report</option>
+                        <option value="json">JSON Data</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="generateReportBtn">
+                    <i class="fas fa-file-alt me-2"></i>Generate Report
+                </button>
             </div>
         </div>
     </div>
