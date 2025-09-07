@@ -1,266 +1,188 @@
-# Advanced Email Spoofing Demonstration
+# Advanced Email Spoofing Web Application
 
-This repository contains Python scripts that demonstrate how email spoofing works for **educational purposes only**. Email spoofing is a technique used to forge email headers so that messages appear to originate from someone other than the actual sender.
+A modern web application that demonstrates advanced email spoofing techniques for educational purposes only. This tool provides a user-friendly web interface for the original command-line email spoofing tool.
 
-[![GitHub](https://img.shields.io/badge/github-Triotion-blue?style=flat&logo=github)](https://github.com/Triotion/)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Python 3.6+](https://img.shields.io/badge/python-3.6+-blue.svg)](https://www.python.org/downloads/)
+## ⚠️ DISCLAIMER
 
-## ⚠️ Disclaimer
+**This tool is for educational purposes only!** The developers are not responsible for any misuse of this application. Email spoofing can be used for malicious purposes, and users should only use this tool for legitimate educational, testing, or security research purposes.
 
-**This tool is meant for educational purposes only.** Using this tool to send deceptive emails without consent is:
+## 🚀 Features
 
-- **Illegal** in most jurisdictions
-- **Unethical**
-- May violate terms of service for email providers
-- Could result in your IP/account being blacklisted
+- **Modern Web Interface**: Clean, responsive design with Bootstrap 5
+- **Email Spoofing**: Send emails with spoofed sender information
+- **SMTP Testing**: Test individual SMTP server connections
+- **Batch Server Testing**: Test multiple SMTP servers from a file
+- **File Attachments**: Support for various file types
+- **Custom Headers**: Add custom email headers
+- **X-Headers Spoofing**: Add fake X-headers for legitimacy
+- **Real-time Validation**: Form validation with visual feedback
+- **Auto-save**: Form data is automatically saved to localStorage
+- **Responsive Design**: Works on desktop and mobile devices
 
-The author assumes no responsibility for any misuse of this information or script.
+## 📋 Requirements
 
-## Features
+- Python 3.7 or higher
+- Flask 2.3.3
+- SMTP server credentials
 
-- Basic email spoofing with custom From header
-- Advanced header manipulation
-- Custom X-header generation
-- Support for multiple recipients (To, CC, BCC)
-- File attachments
-- Reply-To address customization
-- HTML email templates
-- Debug mode for troubleshooting
-- Bulk testing of SMTP servers from a file
-- Multi-threaded SMTP server testing
-- Colorized console output
+## 🛠️ Installation
 
-## Requirements
-
-- Python 3.6 or later
-- Required Python packages:
-  - colorama
-- Access to an SMTP server (most email providers will require authentication)
-- SMTP server that allows header manipulation (many public email services now block this)
-
-## Installation
-
-```bash
-git clone https://github.com/Triotion/email-spoofing.git
-cd email-spoofing
-pip install colorama
-```
-
-## Basic Usage
-
-```bash
-python email_spoofer.py --server smtp.example.com --port 587 --user your_email@example.com --password your_password --from-name "Spoofed Name" --from-email spoofed@example.com --to recipient@example.com --subject "Test Subject" --message "<h1>This is a test</h1><p>This email demonstrates spoofing.</p>"
-```
-
-### Using SMTP Server File
-
-You can provide multiple SMTP servers in a file and the script will test them all to find working ones:
-
-```bash
-python advanced_email_spoofer.py --smtp-file smtp_servers.txt --from-name "Spoofed Name" --from-email spoofed@example.com --to recipient@example.com --subject "Test Subject" --message "This is a test message"
-```
-
-The SMTP server file format is simple:
-```
-host|port|username|password
-```
-
-For example:
-```
-smtp.example.com|587|user@example.com|password123
-smtp.another.com|465|admin@another.com|securepass
-```
-
-### Advanced SMTP Testing 
-
-You can test which SMTP servers are working without sending emails:
-
-```bash
-python advanced_email_spoofer.py --smtp-file smtp_servers.txt --test-only --threads 10
-```
-
-This will:
-1. Test all SMTP servers in the file
-2. Use 10 threads to speed up the testing process
-3. Show which servers are working
-4. Exit without sending any emails
-
-### Command Line Arguments
-
-#### SMTP Settings:
-- `--server`: SMTP server address
-- `--port`: SMTP server port (default: 587)
-- `--user`: SMTP username (typically your real email)
-- `--password`: SMTP password
-- `--smtp-file`: File containing SMTP credentials in format "host|port|username|password"
-- `--test-only`: Only test SMTP servers, don't send emails
-- `--threads`: Number of threads for testing SMTP servers (default: 5)
-- `--debug`: SMTP debug level (0-2)
-
-#### Spoofing Parameters:
-- `--from-name`: Display name you want to show as the sender
-- `--from-email`: Email address you want to show as the sender
-- `--reply-to`: Reply-to email address
-- `--to`: Recipient email(s), comma separated
-- `--cc`: CC recipient(s), comma separated
-- `--bcc`: BCC recipient(s), comma separated
-- `--subject`: Email subject
-- `--message`: Email body content (HTML supported)
-- `--plain-text`: Send as plain text instead of HTML
-- `--attach`: File(s) to attach (can be used multiple times)
-- `--add-xheaders`: Add fake X-headers to make email look more legitimate
-- `--custom-header`: Add custom header in format "Header:Value" (can be used multiple times)
-
-## Usage Examples
-
-### Basic Email Spoofing
-
-#### Example 1: Basic spoofed email
-
-```bash
-python email_spoofer.py \
-  --server smtp.example.com \
-  --port 587 \
-  --user your_real_email@example.com \
-  --password your_password \
-  --from-name "John Smith" \
-  --from-email ceo@company.com \
-  --to victim@example.com \
-  --subject "Urgent: Action Required" \
-  --message "Please review the attached document and respond ASAP."
-```
-
-#### Example 2: Using HTML content
-
-```bash
-python email_spoofer.py \
-  --server smtp.example.com \
-  --port 587 \
-  --user your_real_email@example.com \
-  --password your_password \
-  --from-name "IT Department" \
-  --from-email it-support@company.com \
-  --to victim@example.com \
-  --subject "Password Reset Required" \
-  --message "<h2>Security Alert</h2><p>Your password needs to be reset. <a href='https://example.com'>Click here</a> to reset.</p>"
-```
-
-### Advanced Email Spoofing
-
-#### Example 1: Using the HTML template
-
-```bash
-# First, read the HTML template
-TEMPLATE=$(cat email_template.html)
-
-# Then use it in the command
-python advanced_email_spoofer.py \
-  --server smtp.example.com \
-  --port 587 \
-  --user your_real_email@example.com \
-  --password your_password \
-  --from-name "Security Team" \
-  --from-email security@trusted-company.com \
-  --reply-to support@trusted-company.com \
-  --to victim@example.com \
-  --subject "Security Alert: Verify Your Account" \
-  --message "$TEMPLATE"
-```
-
-#### Example 2: Adding custom headers and X-headers
-
-```bash
-python advanced_email_spoofer.py \
-  --server smtp.example.com \
-  --port 587 \
-  --user your_real_email@example.com \
-  --password your_password \
-  --from-name "PayPal Security" \
-  --from-email security@paypal.com \
-  --to victim@example.com \
-  --subject "Your account has been limited" \
-  --message "<p>Dear customer,</p><p>Your PayPal account has been temporarily limited. Please <a href='https://example.com'>verify your information</a> to restore access.</p>" \
-  --add-xheaders \
-  --custom-header "List-Unsubscribe: <mailto:unsubscribe@paypal.com>" \
-  --custom-header "Precedence: bulk"
-```
-
-#### Example 3: Using SMTP servers from a file
-
-```bash
-python advanced_email_spoofer.py \
-  --smtp-file smtp_servers.txt \
-  --from-name "HR Department" \
-  --from-email hr@company.com \
-  --to "employee1@example.com,employee2@example.com" \
-  --cc "manager@example.com" \
-  --subject "Updated Company Policy" \
-  --message "<p>Please find attached the updated company policy document.</p><p>All employees must read and acknowledge by Friday.</p>" \
-  --attach policy_document.pdf
-```
-
-#### Example 4: Testing SMTP servers only
-
-```bash
-python advanced_email_spoofer.py \
-  --smtp-file smtp_servers.txt \
-  --test-only \
-  --threads 10
-```
-
-## Why This Doesn't Always Work
-
-Modern email systems have multiple protections against spoofing:
-
-1. **SPF (Sender Policy Framework)**: Validates if the sending server is authorized to send emails for the domain
-2. **DKIM (DomainKeys Identified Mail)**: Cryptographically verifies email authenticity
-3. **DMARC (Domain-based Message Authentication, Reporting & Conformance)**: Policy framework that uses SPF and DKIM results
-
-These protections mean that while you can change the "From" header, receiving mail servers can detect that the email wasn't actually sent from the claimed domain, often marking such emails as spam or rejecting them entirely.
-
-## Anti-Spoofing Measures
-
-To protect yourself from email spoofing:
-
-- Check email headers for discrepancies
-- Be suspicious of unexpected emails, especially those requesting sensitive information
-- Enable SPF, DKIM, and DMARC for your own domains
-- Use email providers that implement strong anti-spoofing measures
-
-## Legal Use Cases
-
-Legitimate reasons to understand email spoofing include:
-
-- Security research and education
-- Penetration testing (with proper authorization)
-- Testing your own email security systems
-
-## Important Notes
-
-1. Most modern email services will detect spoofed emails and mark them as spam or reject them entirely.
-
-2. To see the email headers that were actually received, ask the recipient to view the full headers of the email.
-
-3. For testing, it's recommended to send to email accounts you control.
-
-4. Some email providers (like Gmail) may rewrite your From header to include your actual authenticated email, such as:
-   ```
-   From: "John Smith via your-email@gmail.com" <your-email@gmail.com>
+1. **Clone or download the repository**
+   ```bash
+   git clone <repository-url>
+   cd email-spoofing-web
    ```
 
-## Donations
+2. **Install Python dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-If you find this tool valuable, consider donating to support ongoing development:
+3. **Run the application**
+   ```bash
+   python app.py
+   ```
 
-- **BTC**: bc1qtkm7dzjp76gx8t9c02pshfd8rzarj6gj9yzglu
-- **ETH**: 0x88Aa0E09a5A62919321f38Fb4782A17f4dc91A9B
-- **XMR**: 0x6730c52B3369fD22E3ACc6090a3Ee7d5C617aBE0
+4. **Access the web interface**
+   Open your browser and navigate to `http://localhost:5000`
 
-## Author
+## 📁 Project Structure
 
-Created by [@Triotion](https://github.com/Triotion/) - [Telegram](https://t.me/Triotion)
+```
+email-spoofing-web/
+├── app.py                 # Main Flask application
+├── requirements.txt       # Python dependencies
+├── README.md             # This file
+├── templates/            # HTML templates
+│   ├── base.html         # Base template
+│   └── index.html        # Main page template
+├── static/               # Static files
+│   ├── css/
+│   │   └── style.css     # Custom CSS styles
+│   └── js/
+│       └── script.js     # JavaScript functionality
+└── uploads/              # Temporary file uploads (auto-created)
+```
 
-## License
+## 🎯 Usage
 
-This project is licensed under the MIT License - see the LICENSE file for details. 
+### 1. Send Email Tab
+
+- **SMTP Settings**: Configure your SMTP server details
+- **Email Settings**: Set the spoofed sender information
+- **Recipients**: Add TO, CC, and BCC recipients
+- **Message Content**: Write your email subject and body
+- **Advanced Options**: Add attachments and custom headers
+- **X-Headers**: Enable fake X-headers for legitimacy
+
+### 2. Test Connection Tab
+
+- Test individual SMTP server connections
+- Verify credentials before sending emails
+- SMTP settings are automatically copied from the Send Email tab
+
+### 3. Test Servers Tab
+
+- Upload a text file with multiple SMTP servers
+- Format: `host|port|username|password` (one per line)
+- Test all servers and see which ones work
+- Results show working servers with connection details
+
+## 📝 SMTP Server File Format
+
+Create a text file with your SMTP servers in the following format:
+
+```
+smtp.gmail.com|587|your-email@gmail.com|your-password
+smtp.outlook.com|587|your-email@outlook.com|your-password
+smtp.yahoo.com|587|your-email@yahoo.com|your-password
+```
+
+## 🔧 Configuration
+
+### Environment Variables
+
+You can set the following environment variables:
+
+- `FLASK_ENV`: Set to `development` for debug mode
+- `SECRET_KEY`: Change the secret key for production
+
+### Security Notes
+
+- Change the `SECRET_KEY` in `app.py` for production use
+- The application runs on all interfaces (`0.0.0.0`) by default
+- File uploads are limited to 16MB
+- Only specific file types are allowed for attachments
+
+## 🎨 Customization
+
+### Styling
+
+- Modify `static/css/style.css` for custom styling
+- The application uses Bootstrap 5 for the base framework
+- Custom CSS variables can be added for easy theming
+
+### Functionality
+
+- Add new features by modifying `app.py`
+- Extend the JavaScript functionality in `static/js/script.js`
+- Modify HTML templates in the `templates/` directory
+
+## 🐛 Troubleshooting
+
+### Common Issues
+
+1. **Port already in use**
+   - Change the port in `app.py`: `app.run(port=5001)`
+
+2. **File upload errors**
+   - Check file size (max 16MB)
+   - Verify file type is allowed
+   - Ensure uploads directory exists
+
+3. **SMTP connection errors**
+   - Verify server credentials
+   - Check if 2FA is enabled (use app passwords)
+   - Ensure server allows SMTP connections
+
+4. **Template not found errors**
+   - Ensure `templates/` directory exists
+   - Check file permissions
+
+### Debug Mode
+
+Enable debug mode by setting:
+```python
+app.run(debug=True)
+```
+
+## 📚 Educational Use Cases
+
+- **Security Research**: Understanding email spoofing techniques
+- **Penetration Testing**: Testing email security measures
+- **Educational Purposes**: Learning about email protocols
+- **Security Awareness**: Demonstrating email vulnerabilities
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+## 📄 License
+
+This project is for educational purposes only. Use responsibly and in accordance with applicable laws and regulations.
+
+## ⚖️ Legal Notice
+
+The developers of this tool are not responsible for any misuse. Users must comply with all applicable laws and regulations when using this software. Email spoofing for malicious purposes is illegal in most jurisdictions.
+
+## 🔗 Original Tool
+
+This web application is based on the original command-line email spoofing tool developed by Triotion.
+
+---
+
+**Remember: Use this tool responsibly and only for legitimate educational purposes!**

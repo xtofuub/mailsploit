@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="mb-0">
+                        <i class="fas fa-envelope-open-text me-2"></i>
+                        Advanced Email Spoofing Tool
+                    </h4>
+                    <small>Educational Purposes Only</small>
+                </div>
+                <button id="themeToggle" class="btn btn-outline-light btn-sm">
+                    <i class="fas fa-moon" id="themeIcon"></i>
+                </button>
+            </div>
+            <div class="card-body">
+                <!-- Navigation Tabs -->
+                <ul class="nav nav-tabs" id="mainTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="send-tab" data-bs-toggle="tab" data-bs-target="#send" type="button" role="tab">
+                            <i class="fas fa-paper-plane me-1"></i> Send Email
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="test-tab" data-bs-toggle="tab" data-bs-target="#test" type="button" role="tab">
+                            <i class="fas fa-vial me-1"></i> Test Connection
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="servers-tab" data-bs-toggle="tab" data-bs-target="#servers" type="button" role="tab">
+                            <i class="fas fa-server me-1"></i> Test Servers
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="spoof-tab" data-bs-toggle="tab" data-bs-target="#spoof" type="button" role="tab">
+                            <i class="fas fa-shield-alt me-1"></i> Spoof Check
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content mt-4" id="mainTabsContent">
+                    <!-- Send Email Tab -->
+                    <div class="tab-pane fade show active" id="send" role="tabpanel">
+                        <form id="emailForm" enctype="multipart/form-data">
+                            <div class="row">
+                                <!-- SMTP Settings -->
+                                <div class="col-md-6">
+                                    <h5 class="text-primary mb-3">
+                                        <i class="fas fa-server me-2"></i>SMTP Settings
+                                    </h5>
+                                    <div class="mb-3">
+                                        <label for="smtp_server" class="form-label">SMTP Server</label>
+                                        <input type="text" class="form-control" id="smtp_server" name="smtp_server" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="smtp_port" class="form-label">Port</label>
+                                        <input type="number" class="form-control" id="smtp_port" name="smtp_port" value="587">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="username" class="form-label">Username</label>
+                                        <input type="text" class="form-control" id="username" name="username" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="password" class="form-label">Password</label>
+                                        <input type="text" class="form-control" id="password" name="password" required>
+                                    </div>
+                                </div>
+
+                                <!-- Email Settings -->
+                                <div class="col-md-6">
+                                    <h5 class="text-primary mb-3">
+                                        <i class="fas fa-envelope me-2"></i>Email Settings
+                                    </h5>
+                                    <div class="mb-3">
+                                        <label for="from_name" class="form-label">From Name</label>
+                                        <input type="text" class="form-control" id="from_name" name="from_name" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="from_email" class="form-label">From Email</label>
+                                        <input type="email" class="form-control" id="from_email" name="from_email" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <!-- Recipients -->
+                                <div class="col-md-4">
+                                    <h5 class="text-primary mb-3">
+                                        <i class="fas fa-users me-2"></i>Recipients
+                                    </h5>
+                                    <div class="mb-3">
+                                        <label for="to_email" class="form-label">To (comma separated)</label>
+                                        <input type="text" class="form-control" id="to_email" name="to_email" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="cc" class="form-label">CC (comma separated)</label>
+                                        <input type="text" class="form-control" id="cc" name="cc">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="bcc" class="form-label">BCC (comma separated)</label>
+                                        <input type="text" class="form-control" id="bcc" name="bcc">
+                                    </div>
+                                </div>
+
+                                <!-- Message Content -->
+                                <div class="col-md-8">
+                                    <h5 class="text-primary mb-3">
+                                        <i class="fas fa-edit me-2"></i>Message Content
+                                    </h5>
+                                    <div class="mb-3">
+                                        <label for="subject" class="form-label">Subject</label>
+                                        <input type="text" class="form-control" id="subject" name="subject">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="message" class="form-label">Message</label>
+                                        <textarea class="form-control" id="message" name="message" rows="8" placeholder="Enter your message here..."></textarea>
+                                    </div>
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="html" name="html" checked>
+                                            <label class="form-check-label" for="html">
+                                                Send as HTML
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <!-- Advanced Options -->
+                                <div class="col-md-6">
+                                    <h5 class="text-primary mb-3">
+                                        <i class="fas fa-cogs me-2"></i>Advanced Options
+                                    </h5>
+                                    <div class="mb-3">
+                                        <label for="attachments" class="form-label">Attachments</label>
+                                        <input type="file" class="form-control" id="attachments" name="attachments" multiple>
+                                        <div class="form-text">Supported formats: txt, pdf, png, jpg, jpeg, gif, doc, docx</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="add_xheaders" name="add_xheaders">
+                                            <label class="form-check-label" for="add_xheaders">
+                                                Add fake X-headers for legitimacy
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Custom Headers -->
+                                <div class="col-md-6">
+                                    <h5 class="text-primary mb-3">
+                                        <i class="fas fa-code me-2"></i>Custom Headers
+                                    </h5>
+                                    <div class="mb-3">
+                                        <label for="custom_headers" class="form-label">Custom Headers (one per line, format: Header:Value)</label>
+                                        <textarea class="form-control" id="custom_headers" name="custom_headers" rows="4" placeholder="X-Custom-Header: Custom Value&#10;X-Another-Header: Another Value"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="text-center">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-paper-plane me-2"></i>Send Email
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Test Connection Tab -->
+                    <div class="tab-pane fade" id="test" role="tabpanel">
+                        <form id="testForm">
+                            <div class="row justify-content-center">
+                                <div class="col-md-6">
+                                    <h5 class="text-primary mb-3">
+                                        <i class="fas fa-vial me-2"></i>Test SMTP Connection
+                                    </h5>
+                                    <div class="mb-3">
+                                        <label for="test_smtp_server" class="form-label">SMTP Server</label>
+                                        <input type="text" class="form-control" id="test_smtp_server" name="smtp_server" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="test_smtp_port" class="form-label">Port</label>
+                                        <input type="number" class="form-control" id="test_smtp_port" name="smtp_port" value="587">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="test_username" class="form-label">Username</label>
+                                        <input type="text" class="form-control" id="test_username" name="username" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="test_password" class="form-label">Password</label>
+                                        <input type="text" class="form-control" id="test_password" name="password" required>
+                                    </div>
+                                    <div class="text-center">
+                                        <button type="submit" class="btn btn-warning btn-lg">
+                                            <i class="fas fa-vial me-2"></i>Test Connection
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Test Servers Tab -->
+                    <div class="tab-pane fade" id="servers" role="tabpanel">
+                        <form id="serversForm" enctype="multipart/form-data">
+                            <div class="row justify-content-center">
+                                <div class="col-md-8">
+                                    <h5 class="text-primary mb-3">
+                                        <i class="fas fa-server me-2"></i>Test Multiple SMTP Servers
+                                    </h5>
+                                    <div class="mb-3">
+                                        <label for="smtp_file" class="form-label">SMTP Servers File</label>
+                                        <input type="file" class="form-control" id="smtp_file" name="smtp_file" accept=".txt" required>
+                                        <div class="form-text">
+                                            Upload a text file with SMTP servers in format: host|port|username|password (one per line)
+                                        </div>
+                                    </div>
+                                    <div class="text-center">
+                                        <button type="submit" class="btn btn-info btn-lg">
+                                            <i class="fas fa-server me-2"></i>Test Servers
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                        <div id="serversResults" class="mt-4" style="display: none;">
+                            <h5 class="text-success">Test Results</h5>
+                            <div id="serversList"></div>
+                        </div>
+                    </div>
+
+                    <!-- Spoof Check Tab -->
+                    <div class="tab-pane fade" id="spoof" role="tabpanel">
+                        <form id="spoofForm">
+                            <div class="row justify-content-center">
+                                <div class="col-md-8">
+                                    <h5 class="text-primary mb-3">
+                                        <i class="fas fa-shield-alt me-2"></i>Domain Spoofing Vulnerability Check
+                                    </h5>
+                                    <div class="mb-3">
+                                        <label for="domain_check" class="form-label">Domain to Check</label>
+                                        <input type="text" class="form-control" id="domain_check" name="domain" placeholder="example.com" required>
+                                        <div class="form-text">Enter a domain name to check its DMARC and SPF records</div>
+                                    </div>
+                                    <div class="text-center">
+                                        <button type="submit" class="btn btn-success btn-lg">
+                                            <i class="fas fa-search me-2"></i>Check Domain
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                        <div id="spoofResults" class="mt-4" style="display: none;">
+                            <h5 class="text-primary">Domain Security Analysis</h5>
+                            <div id="spoofAnalysis"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<div class="modal fade" id="loadingModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <h5>Processing...</h5>
+                <p id="loadingText">Please wait while we process your request.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
