@@ -74,6 +74,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // Enhanced form interactions
+    enhanceFormInteractions();
+
     // Auto-fill reply-to with from-email (only if reply-to is empty and user hasn't touched it)
     const fromEmailField = document.getElementById('from_email');
     const replyToField = document.getElementById('reply_to');
@@ -707,3 +710,68 @@ fieldsWithHistory.forEach(fieldName => {
         });
     }
 });
+
+// Enhanced form interactions for professional UI
+function enhanceFormInteractions() {
+    // Add loading states to buttons
+    document.querySelectorAll('button[type="submit"]').forEach(button => {
+        const form = button.closest('form');
+        if (form) {
+            form.addEventListener('submit', function() {
+                button.disabled = true;
+                const originalText = button.innerHTML;
+                button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Processing...';
+                
+                // Re-enable button after 5 seconds as fallback
+                setTimeout(() => {
+                    button.disabled = false;
+                    button.innerHTML = originalText;
+                }, 5000);
+            });
+        }
+    });
+
+    // Enhanced password field toggle
+    document.querySelectorAll('input[type="password"]').forEach(field => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'position-relative';
+        field.parentNode.insertBefore(wrapper, field);
+        wrapper.appendChild(field);
+        
+        const toggleBtn = document.createElement('button');
+        toggleBtn.type = 'button';
+        toggleBtn.className = 'btn btn-outline-secondary position-absolute top-50 end-0 translate-middle-y me-2';
+        toggleBtn.style.border = 'none';
+        toggleBtn.style.background = 'none';
+        toggleBtn.innerHTML = '<i class="fas fa-eye"></i>';
+        
+        toggleBtn.addEventListener('click', function() {
+            const type = field.type === 'password' ? 'text' : 'password';
+            field.type = type;
+            this.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
+        });
+        
+        wrapper.appendChild(toggleBtn);
+    });
+
+    // Auto-resize textareas
+    document.querySelectorAll('textarea').forEach(textarea => {
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 300) + 'px';
+        });
+    });
+
+    // Professional form validation styling
+    document.querySelectorAll('input, textarea, select').forEach(field => {
+        field.addEventListener('blur', function() {
+            if (this.checkValidity()) {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+            } else {
+                this.classList.remove('is-valid');
+                this.classList.add('is-invalid');
+            }
+        });
+    });
+}
