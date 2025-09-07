@@ -1,50 +1,85 @@
-# Advanced Email Spoofing Web Application
+# 🛡️ Email Spoofing Security Project  
 
-A modern web application that demonstrates advanced email spoofing techniques for educational purposes only. This tool provides a user-friendly web interface for the original command-line email spoofing tool.
+[![Python](https://img.shields.io/badge/python-3.7%2B-blue?logo=python)](https://www.python.org/) 
+[![License](https://img.shields.io/badge/license-Educational-green)](LICENSE) 
+[![Educational Use](https://img.shields.io/badge/Use-Educational-yellow)](https://github.com/) 
+[![Status](https://img.shields.io/badge/status-Active-brightgreen)](https://github.com/)  
 
-## ⚠️ DISCLAIMER
+A modern **security-focused web application** designed to test whether a website or domain is vulnerable to **email spoofing**.  
+This tool demonstrates advanced spoofing techniques **strictly for educational and research purposes**.  
 
-**This tool is for educational purposes only!** The developers are not responsible for any misuse of this application. Email spoofing can be used for malicious purposes, and users should only use this tool for legitimate educational, testing, or security research purposes.
+It provides a **user-friendly web interface** on top of the original command-line email spoofing utility, making it easier to:  
+- Perform spoofing tests in a controlled environment  
+- Analyze results and identify potential risks  
+- Understand vulnerabilities and how to mitigate them  
+
+By simulating spoofing attempts safely, this project helps raise awareness about email security and encourages implementing proper defenses such as **SPF, DKIM, and DMARC**.
+
+---
+
+## ⚠️ Disclaimer
+> [!WARNING]
+>**For educational and security purpose only!**  
+>The developers are **not responsible for any misuse** of this application. Email spoofing can be illegal and should only be used for **authorized testing, learning, or security research**.
+
+---
+
+## 🌐 User Interface
+
+<img width="500" height="500" alt="UI Screenshot" src="https://github.com/user-attachments/assets/ba456e0f-6708-4e0e-ae36-fd9635dd9465" />
+
+The tool includes a built-in scanning feature that analyzes a domain or website to quickly identify if it is vulnerable to spoofing.  
+After scanning, it provides **clear results** and **actionable recommendations** to help users improve email security.
+
+---
 
 ## 🚀 Features
 
-- **Modern Web Interface**: Clean, responsive design with Bootstrap 5
-- **Email Spoofing**: Send emails with spoofed sender information
-- **SMTP Testing**: Test individual SMTP server connections
-- **Batch Server Testing**: Test multiple SMTP servers from a file
-- **File Attachments**: Support for various file types
-- **Custom Headers**: Add custom email headers
-- **X-Headers Spoofing**: Add fake X-headers for legitimacy
-- **Real-time Validation**: Form validation with visual feedback
-- **Auto-save**: Form data is automatically saved to localStorage
-- **Responsive Design**: Works on desktop and mobile devices
+- **Modern Web Interface**: Clean, responsive design using Bootstrap 5  
+- **Email Spoofing**: Send emails with spoofed sender information  
+- **SMTP Testing**: Test individual SMTP server connections  
+- **Batch Server Testing**: Test multiple SMTP servers from a file  
+- **File Attachments**: Supports various file types  
+- **Custom Headers**: Add custom email headers  
+- **X-Headers Spoofing**: Add fake X-headers to improve spoof legitimacy  
+- **Real-time Validation**: Form validation with visual feedback  
+- **Auto-save**: Automatically saves form data to `localStorage`  
+- **Responsive Design**: Works on desktop and mobile devices  
+
+---
 
 ## 📋 Requirements
 
-- Python 3.7 or higher
-- Flask 2.3.3
-- SMTP server credentials
+- Python 3.7+  
+- Flask 2.3.3  
+- SMTP server credentials  
+
+---
 
 ## 🛠️ Installation
 
-1. **Clone or download the repository**
-   ```bash
-   git clone <repository-url>
-   cd email-spoofing-web
-   ```
+1. **Clone the repository**
+```bash
+git clone <repository-url>
+cd email-spoofing-web
+````
 
-2. **Install Python dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
+2. **Install dependencies**
+
+```bash
+pip install -r requirements.txt
+```
 
 3. **Run the application**
-   ```bash
-   python app.py
-   ```
+
+```bash
+python app.py
+```
 
 4. **Access the web interface**
-   Open your browser and navigate to `http://localhost:5000`
+   Open your browser and go to `http://localhost:5000`
+
+---
 
 ## 📁 Project Structure
 
@@ -52,45 +87,44 @@ A modern web application that demonstrates advanced email spoofing techniques fo
 email-spoofing-web/
 ├── app.py                 # Main Flask application
 ├── requirements.txt       # Python dependencies
-├── README.md             # This file
-├── templates/            # HTML templates
-│   ├── base.html         # Base template
-│   └── index.html        # Main page template
-├── static/               # Static files
+├── README.md              # This file
+├── templates/             # HTML templates
+│   ├── base.html          # Base template
+│   └── index.html         # Main page template
+├── static/                # Static files
 │   ├── css/
-│   │   └── style.css     # Custom CSS styles
+│   │   └── style.css      # Custom CSS styles
 │   └── js/
-│       └── script.js     # JavaScript functionality
-└── uploads/              # Temporary file uploads (auto-created)
+│       └── script.js      # JavaScript functionality
+└── uploads/               # Temporary file uploads (auto-created)
 ```
+
+---
 
 ## 🎯 Usage
 
-### 1. Send Email Tab
+### Send Email Tab
 
-- **SMTP Settings**: Configure your SMTP server details
-- **Email Settings**: Set the spoofed sender information
-- **Recipients**: Add TO, CC, and BCC recipients
-- **Message Content**: Write your email subject and body
-- **Advanced Options**: Add attachments and custom headers
-- **X-Headers**: Enable fake X-headers for legitimacy
+* Configure SMTP settings
+* Set spoofed sender information
+* Add TO, CC, BCC recipients
+* Write email subject and body
+* Add attachments or custom headers
+* Enable X-Headers spoofing
 
-### 2. Test Connection Tab
+### Test Connection Tab
 
-- Test individual SMTP server connections
-- Verify credentials before sending emails
-- SMTP settings are automatically copied from the Send Email tab
+* Test single SMTP server connections
+* Verify credentials before sending emails
 
-### 3. Test Servers Tab
+### Test Servers Tab
 
-- Upload a text file with multiple SMTP servers
-- Format: `host|port|username|password` (one per line)
-- Test all servers and see which ones work
-- Results show working servers with connection details
+* Upload multiple SMTP servers (`host|port|username|password`)
+* Test all servers and view working connections
+
+---
 
 ## 📝 SMTP Server File Format
-
-Create a text file with your SMTP servers in the following format:
 
 ```
 smtp.gmail.com|587|your-email@gmail.com|your-password
@@ -98,91 +132,74 @@ smtp.outlook.com|587|your-email@outlook.com|your-password
 smtp.yahoo.com|587|your-email@yahoo.com|your-password
 ```
 
+---
+
 ## 🔧 Configuration
 
 ### Environment Variables
 
-You can set the following environment variables:
-
-- `FLASK_ENV`: Set to `development` for debug mode
-- `SECRET_KEY`: Change the secret key for production
+* `FLASK_ENV`: `development` for debug mode
+* `SECRET_KEY`: Change for production
 
 ### Security Notes
 
-- Change the `SECRET_KEY` in `app.py` for production use
-- The application runs on all interfaces (`0.0.0.0`) by default
-- File uploads are limited to 16MB
-- Only specific file types are allowed for attachments
+* Change `SECRET_KEY` in `app.py` for production
+* Runs on all interfaces (`0.0.0.0`) by default
+* File uploads limited to 16MB; only allowed file types
+
+---
 
 ## 🎨 Customization
 
-### Styling
+* **Styling**: Modify `static/css/style.css` or use Bootstrap variables
+* **Functionality**: Extend `app.py`, `script.js`, or HTML templates
 
-- Modify `static/css/style.css` for custom styling
-- The application uses Bootstrap 5 for the base framework
-- Custom CSS variables can be added for easy theming
-
-### Functionality
-
-- Add new features by modifying `app.py`
-- Extend the JavaScript functionality in `static/js/script.js`
-- Modify HTML templates in the `templates/` directory
+---
 
 ## 🐛 Troubleshooting
 
-### Common Issues
+* **Port in use**: Change port in `app.py` (`app.run(port=5001)`)
+* **File upload errors**: Check size/type and ensure `uploads/` exists
+* **SMTP connection issues**: Verify credentials, 2FA, and server access
+* **Template not found**: Ensure `templates/` directory exists
 
-1. **Port already in use**
-   - Change the port in `app.py`: `app.run(port=5001)`
+Enable debug mode:
 
-2. **File upload errors**
-   - Check file size (max 16MB)
-   - Verify file type is allowed
-   - Ensure uploads directory exists
-
-3. **SMTP connection errors**
-   - Verify server credentials
-   - Check if 2FA is enabled (use app passwords)
-   - Ensure server allows SMTP connections
-
-4. **Template not found errors**
-   - Ensure `templates/` directory exists
-   - Check file permissions
-
-### Debug Mode
-
-Enable debug mode by setting:
 ```python
 app.run(debug=True)
 ```
 
+---
+
 ## 📚 Educational Use Cases
 
-- **Security Research**: Understanding email spoofing techniques
-- **Penetration Testing**: Testing email security measures
-- **Educational Purposes**: Learning about email protocols
-- **Security Awareness**: Demonstrating email vulnerabilities
+* Security research & learning about spoofing techniques
+* Penetration testing of email security measures
+* Raising awareness about email protocol vulnerabilities
+
+---
 
 ## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
-
-## 📄 License
-
-This project is for educational purposes only. Use responsibly and in accordance with applicable laws and regulations.
-
-## ⚖️ Legal Notice
-
-The developers of this tool are not responsible for any misuse. Users must comply with all applicable laws and regulations when using this software. Email spoofing for malicious purposes is illegal in most jurisdictions.
-
-## 🔗 Original Tool
-
-This web application is based on the original command-line email spoofing tool developed by Triotion.
+3. Make your changes & test thoroughly
+4. Submit a pull request
 
 ---
 
-**Remember: Use this tool responsibly and only for legitimate educational purposes!**
+## 📄 License
+
+**Educational purposes only.** Use responsibly and legally.
+
+---
+
+## 🔗 Original Tool
+
+Based on the command-line email spoofing tool developed by Triotion.
+
+---
+
+**Remember: Use responsibly and only for legitimate educational purposes!**
+
+
