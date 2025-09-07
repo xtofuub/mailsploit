@@ -256,6 +256,81 @@ function showAlert(message, type = 'success') {
     }, 5000);
 }
 
+function showEmailSuccessAlert(message, type = 'success') {
+    // Remove existing email alerts
+    const existingAlerts = document.querySelectorAll('.email-success-alert, .email-error-alert');
+    existingAlerts.forEach(alert => alert.remove());
+
+    // Create new alert
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show email-success-alert`;
+    alertDiv.innerHTML = `
+        <i class="fas fa-check-circle me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+    // Insert after the email form (in the Send Email tab)
+    const emailForm = document.getElementById('emailForm');
+    if (emailForm) {
+        emailForm.parentNode.insertBefore(alertDiv, emailForm.nextSibling);
+    }
+
+    // Auto-dismiss after 8 seconds (longer for success messages)
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 8000);
+}
+
+function showEmailErrorAlert(message, type = 'danger') {
+    // Remove existing email alerts
+    const existingAlerts = document.querySelectorAll('.email-success-alert, .email-error-alert');
+    existingAlerts.forEach(alert => alert.remove());
+
+    // Create new alert
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show email-error-alert`;
+    alertDiv.innerHTML = `
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+    // Insert after the email form (in the Send Email tab)
+    const emailForm = document.getElementById('emailForm');
+    if (emailForm) {
+        emailForm.parentNode.insertBefore(alertDiv, emailForm.nextSibling);
+    }
+
+    // Auto-dismiss after 10 seconds (longer for error messages)
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 10000);
+}
+
+function resetEmailContentFields() {
+    // Reset only email content fields, preserve SMTP configuration
+    const fieldsToReset = [
+        'from_email', 'to_email', 'cc_email', 'bcc_email', 
+        'subject', 'message', 'attachment', 'x_headers'
+    ];
+    
+    fieldsToReset.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            if (field.type === 'file') {
+                field.value = '';
+            } else {
+                field.value = '';
+            }
+        }
+    });
+}
+
 function sendEmail() {
     showLoading('Sending email...');
     
@@ -269,16 +344,16 @@ function sendEmail() {
     .then(data => {
         hideLoading();
         if (data.success) {
-            showAlert(data.message, 'success');
-            // Reset form
-            document.getElementById('emailForm').reset();
+            showEmailSuccessAlert(data.message, 'success');
+            // Reset only email content fields, preserve SMTP details
+            resetEmailContentFields();
         } else {
-            showAlert(data.error, 'danger');
+            showEmailErrorAlert(data.error, 'danger');
         }
     })
     .catch(error => {
         hideLoading();
-        showAlert('An error occurred: ' + error.message, 'danger');
+        showEmailErrorAlert('An error occurred: ' + error.message, 'danger');
     });
 }
 
