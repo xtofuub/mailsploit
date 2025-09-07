@@ -57,11 +57,14 @@ After scanning, it provides **clear results** and **actionable recommendations**
 ---
 
 ## 🛠️ Installation
+> [!CAUTION]
+> **Recommendation:** For best results, run this application on **Linux** or **Google Cloud Shell**.  
+> Running on Windows may block SMTP connections due to OS-level restrictions or firewall rules.
 
 1. **Clone the repository**
 ```bash
-git clone <repository-url>
-cd email-spoofing-web
+git clone https://github.com/xtofuub/mailsploit.git
+cd mailsploit
 ````
 
 2. **Install dependencies**
@@ -77,10 +80,11 @@ python app.py
 ```
 
 4. **Access the web interface**
-   Open your browser and go to `http://localhost:5000`
+   Open your browser and navigate to `http://localhost:5000`
+
+
 
 ---
-
 ## 📁 Project Structure
 
 ```
@@ -201,6 +205,7 @@ Based on the command-line email spoofing tool developed by Triotion.
 ---
 
 **Remember: Use responsibly and only for legitimate educational purposes!**
+
 
 
 
