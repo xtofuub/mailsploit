@@ -1,0 +1,37 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# OS generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Project specific
+uploads/
+.agents/
+.gemini/
+*.tmp
+*.log
+*.bak
+
+# Environment
+.env
+venv/
+env/
+ENV/
+.venv/
+
+# AI Assistant artifacts
+brain/
+walkthrough.md
+implementation_plan.md
+task.md
+SMTP_Re-enveloping_Walkthrough.md
+smtp_reenveloping_ui_mockup_*.png
+*.webp
+*.png
+
+# Keeping smtp_servers.txt per user request (User: handle with care if it contains secrets)
+# smtp_servers.txt

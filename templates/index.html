@@ -1,0 +1,845 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<!-- ═══ HOME: Hero + Features ═══ -->
+<section class="tool-section active" id="section-home">
+    <div class="hero">
+        <div class="hero-badge">
+            <i class="fas fa-magic"></i> ADVANCED TESTING ENVIRONMENT
+        </div>
+        <h1 class="hero-title">Advanced by design.<br><span class="accent-glow">Simplified by Mailsploit.</span></h1>
+        <p class="hero-subtitle">Automate your workflows, prioritize vulnerabilities, and focus on what truly matters in email security.</p>
+        <div class="hero-actions">
+            <button class="btn btn-white btn-lg" onclick="scrollToSection('features-tab')">
+                Get Started Now <i class="fas fa-arrow-right" style="margin-left: 8px;"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Metrics Section -->
+    <div class="metrics-section">
+        <p class="metrics-desc">
+            Our powerful intelligence tools and automated recon engines give you <br>
+            unprecedented visibility into complex email routing architectures.
+        </p>
+        
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-label">VULNERABILITIES FOUND</div>
+                <div class="metric-value">5M+</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">DOMAINS ANALYZED</div>
+                <div class="metric-value">250k+</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">DETECTION RATE</div>
+                <div class="metric-value">98%</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- About Section -->
+    <div id="about-us" class="about-section">
+        <div class="about-badge">
+            <i class="fas fa-users"></i> WHO WE ARE
+        </div>
+        <h2 class="about-title">Built by hackers, for defenders.</h2>
+        <p class="about-text">
+            Mailsploit was founded by a team of security researchers and penetration testers who were exhausted by the manual effort required to audit SPF, DKIM, and DMARC alignments. We built this toolkit to automate the repetitive tasks, highlight misconfigurations instantly, and provide weaponized payloads for authorized red team exercises.
+        </p>
+    </div>
+
+    <!-- Features Tab Transition -->
+    <div class="features-divider"></div>
+
+    <div id="features-tab" class="features-section">
+        <div class="features-heading" style="text-align: center; margin-bottom: 48px;">
+            <div class="features-badge"><i class="fas fa-bolt"></i> CORE MODULES</div>
+            <h2 class="features-title">Product Features</h2>
+            <p style="color: var(--subtle); font-size: 16px; margin-top: 12px; line-height: 1.6;">Organize, prioritize and control your security testing<br>more efficiently in our trusted platform</p>
+        </div>
+
+        <!-- ═══ Bento Grid ═══ -->
+        <div class="bento-grid" id="bentoGrid">
+
+            <!-- Slot 1: Tall Left Card (spans 3 rows) -->
+            <div class="bento-card bento-tall" onclick="switchSection('domain')">
+                <div class="bento-card-inner">
+                    <div class="bento-icon-circle bento-icon-orange">
+                        <i class="fas fa-globe"></i>
+                    </div>
+                    <div class="bento-card-title">Domain Intelligence</div>
+                    <div class="bento-card-desc">
+                        Unlock effortless reconnaissance. Your gateway to automated domain analysis — connect SPF, DKIM, and DMARC audit engines, streamline workflows, and supercharge vulnerability detection with ease.
+                    </div>
+                    <div class="bento-card-footer">
+                        <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation(); switchSection('domain')">
+                            <i class="fas fa-sliders"></i> Configure
+                        </button>
+                        <div class="bento-toggle">
+                            <div class="bento-toggle-track active"><div class="bento-toggle-thumb"></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slot 2: Trackers Card -->
+            <div class="bento-card" onclick="switchSection('headers')">
+                <div class="bento-card-inner bento-flex-between">
+                    <div>
+                        <div class="bento-card-title" style="font-size: 15px;">Trackers Connected</div>
+                        <div class="bento-card-desc" style="margin-top: 4px;">06 Active Integrations</div>
+                    </div>
+                    <div class="bento-avatars">
+                        <div class="bento-avatar"><i class="fas fa-paper-plane"></i></div>
+                        <div class="bento-avatar"><i class="fas fa-vial"></i></div>
+                        <div class="bento-avatar"><i class="fas fa-server"></i></div>
+                        <div class="bento-avatar"><i class="fas fa-key"></i></div>
+                        <div class="bento-avatar"><i class="fas fa-code"></i></div>
+                        <div class="bento-avatar"><i class="fas fa-ban"></i></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slot 3: Statistic Card -->
+            <div class="bento-card bento-stat-card" onclick="switchSection('subdomain')">
+                <div class="bento-dotted-bg"></div>
+                <div class="bento-stat-value">14X</div>
+            </div>
+
+            <!-- Slot 4: Focus / Analytics Card -->
+            <div class="bento-card" onclick="switchSection('breach')">
+                <div class="bento-card-inner bento-flex-between">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+                        <div>
+                            <div class="bento-card-title" style="font-size: 15px;">Focusing</div>
+                            <div class="bento-card-desc" style="margin-top: 2px;">Security Analytics</div>
+                        </div>
+                        <span class="bento-badge">Range Ratio</span>
+                    </div>
+                    <div class="bento-big-number">42%</div>
+                    <div style="display: flex; justify-content: space-between; width: 100%; font-size: 12px; color: var(--muted);">
+                        <span>Maximum of focus</span>
+                        <span>Monthly Focus</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slot 5: Productivity Card -->
+            <div class="bento-card" style="cursor: default;">
+                <div class="bento-card-inner" style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; height: 100%;">
+                    <div class="bento-card-title" style="font-size: 15px;">Team's Productivity</div>
+                    <div class="bento-card-desc" style="margin-top: 6px;">Boost your team's efficiency with our next-gen email security and payload solutions.</div>
+                </div>
+            </div>
+
+            <!-- Slot 6: Wide Bottom Card (spans 2 cols) -->
+            <div class="bento-card bento-wide" onclick="switchSection('domain')">
+                <div class="bento-card-inner" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+                    <div style="flex: 1;">
+                        <div class="bento-card-title" style="font-size: 16px;">Instant Diagnostics</div>
+                        <div class="bento-card-desc" style="margin-top: 6px; font-size: 13px;">Execute deep email header parsing, DMARC validation, and spoofing vulnerability checks in milliseconds. Zero waiting.</div>
+                    </div>
+                    <div style="font-size: 24px; color: var(--primary);">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ═══ All Tools Carousel ═══ -->
+        <div style="margin-top: 48px;">
+            <div class="features-badge" style="display: block; text-align: center; margin-bottom: 24px;"><i class="fas fa-th"></i> ALL TOOLS</div>
+            <div class="carousel-wrapper">
+                <div class="carousel-fade carousel-fade-left"></div>
+                <div class="carousel-track">
+                    <!-- First set -->
+                    <div class="carousel-card" onclick="switchSection('send')"><i class="fas fa-paper-plane"></i><span>Send Email</span></div>
+                    <div class="carousel-card" onclick="switchSection('test')"><i class="fas fa-vial"></i><span>SMTP Verify</span></div>
+                    <div class="carousel-card" onclick="switchSection('servers')"><i class="fas fa-server"></i><span>Node Cluster</span></div>
+                    <div class="carousel-card" onclick="switchSection('domain')"><i class="fas fa-globe"></i><span>Domain Recon</span></div>
+                    <div class="carousel-card" onclick="switchSection('dkim')"><i class="fas fa-key"></i><span>DKIM Audit</span></div>
+                    <div class="carousel-card" onclick="switchSection('headers')"><i class="fas fa-code"></i><span>Header Parse</span></div>
+                    <div class="carousel-card" onclick="switchSection('dnsbl')"><i class="fas fa-ban"></i><span>Blacklist</span></div>
+                    <div class="carousel-card" onclick="switchSection('subdomain')"><i class="fas fa-network-wired"></i><span>Subdomain</span></div>
+                    <div class="carousel-card" onclick="switchSection('breach')"><i class="fas fa-user-secret"></i><span>Breach</span></div>
+                    <div class="carousel-card" onclick="switchSection('phish')"><i class="fas fa-file-code"></i><span>Phishing</span></div>
+                    <div class="carousel-card" onclick="switchSection('macro')"><i class="fas fa-file-word"></i><span>Macro</span></div>
+                    <div class="carousel-card" onclick="switchSection('pixel')"><i class="fas fa-eye"></i><span>Pixel</span></div>
+                    <div class="carousel-card" onclick="switchSection('homoglyph')"><i class="fas fa-language"></i><span>Homoglyph</span></div>
+                    <div class="carousel-card" onclick="switchSection('obfuscate')"><i class="fas fa-mask"></i><span>Obfuscate</span></div>
+                    <!-- Duplicate set for seamless loop -->
+                    <div class="carousel-card" onclick="switchSection('send')"><i class="fas fa-paper-plane"></i><span>Send Email</span></div>
+                    <div class="carousel-card" onclick="switchSection('test')"><i class="fas fa-vial"></i><span>SMTP Verify</span></div>
+                    <div class="carousel-card" onclick="switchSection('servers')"><i class="fas fa-server"></i><span>Node Cluster</span></div>
+                    <div class="carousel-card" onclick="switchSection('domain')"><i class="fas fa-globe"></i><span>Domain Recon</span></div>
+                    <div class="carousel-card" onclick="switchSection('dkim')"><i class="fas fa-key"></i><span>DKIM Audit</span></div>
+                    <div class="carousel-card" onclick="switchSection('headers')"><i class="fas fa-code"></i><span>Header Parse</span></div>
+                    <div class="carousel-card" onclick="switchSection('dnsbl')"><i class="fas fa-ban"></i><span>Blacklist</span></div>
+                    <div class="carousel-card" onclick="switchSection('subdomain')"><i class="fas fa-network-wired"></i><span>Subdomain</span></div>
+                    <div class="carousel-card" onclick="switchSection('breach')"><i class="fas fa-user-secret"></i><span>Breach</span></div>
+                    <div class="carousel-card" onclick="switchSection('phish')"><i class="fas fa-file-code"></i><span>Phishing</span></div>
+                    <div class="carousel-card" onclick="switchSection('macro')"><i class="fas fa-file-word"></i><span>Macro</span></div>
+                    <div class="carousel-card" onclick="switchSection('pixel')"><i class="fas fa-eye"></i><span>Pixel</span></div>
+                    <div class="carousel-card" onclick="switchSection('homoglyph')"><i class="fas fa-language"></i><span>Homoglyph</span></div>
+                    <div class="carousel-card" onclick="switchSection('obfuscate')"><i class="fas fa-mask"></i><span>Obfuscate</span></div>
+                </div>
+                <div class="carousel-fade carousel-fade-right"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ FAQ SECTION ═══ -->
+    <div class="features-divider" style="margin-top: 60px;"></div>
+    
+    <div id="faq-section" class="faq-section">
+        <div class="features-heading" style="text-align: center; margin-bottom: 40px; margin-top: 60px;">
+            <div class="features-badge"><i class="fas fa-question-circle"></i> FAQ</div>
+            <h2 class="features-title">Frequently Asked Questions</h2>
+            <p style="color: var(--subtle); font-size: 16px; margin-top: 12px;">Everything you need to know about the product and billing.</p>
+        </div>
+
+        <div class="accordion">
+            <!-- FAQ Item 1 -->
+            <div class="accordion-item">
+                <button class="accordion-trigger">
+                    <span>What is Mailsploit used for?</span>
+                    <i class="fas fa-chevron-down accordion-icon"></i>
+                </button>
+                <div class="accordion-content">
+                    <div class="accordion-content-inner">
+                        Mailsploit is a dedicated toolkit designed for authorized red team exercises and security professionals. It helps automate the testing of email infrastructure by checking SPF/DKIM/DMARC alignments, spoofing vulnerabilities, and simulating Phishing or Macro attacks.
+                    </div>
+                </div>
+            </div>
+
+            <!-- FAQ Item 2 -->
+            <div class="accordion-item">
+                <button class="accordion-trigger">
+                    <span>Is this tool legal to use?</span>
+                    <i class="fas fa-chevron-down accordion-icon"></i>
+                </button>
+                <div class="accordion-content">
+                    <div class="accordion-content-inner">
+                        Yes, provided you have explicit authorization from the target organization. This tool is built strictly for educational and auditing purposes. Generating payloads or spoofing domains without permission is illegal and strictly prohibited.
+                    </div>
+                </div>
+            </div>
+
+            <!-- FAQ Item 3 -->
+            <div class="accordion-item">
+                <button class="accordion-trigger">
+                    <span>How accurate is the Domain Recon module?</span>
+                    <i class="fas fa-chevron-down accordion-icon"></i>
+                </button>
+                <div class="accordion-content">
+                    <div class="accordion-content-inner">
+                        The Domain Recon module queries live DNS records (TXT) for SPF, DKIM, and DMARC specifically. It accurately parses the latest configuration using the provided domain, giving you up-to-date vulnerabilities based exactly on how the domain would respond to a sending mail server.
+                    </div>
+                </div>
+            </div>
+
+            <!-- FAQ Item 4 -->
+            <div class="accordion-item">
+                <button class="accordion-trigger">
+                    <span>Can I use my own SMTP nodes?</span>
+                    <i class="fas fa-chevron-down accordion-icon"></i>
+                </button>
+                <div class="accordion-content">
+                    <div class="accordion-content-inner">
+                        Absolutely. The Node Cluster and Send Email modules allow you to input any generic SMTP credentials. The toolkit handles the raw communication via standard ports (25, 465, 587) independent of the provider.
+                    </div>
+                </div>
+            </div>
+            
+            <!-- FAQ Item 5 -->
+            <div class="accordion-item">
+                <button class="accordion-trigger">
+                    <span>Do you log my test targets?</span>
+                    <i class="fas fa-chevron-down accordion-icon"></i>
+                </button>
+                <div class="accordion-content">
+                    <div class="accordion-content-inner">
+                        No. Mailsploit is designed to be privacy-centric. All connections, checks, and payload generations happen locally or directly with the target infrastructure without routing through intermediary logging servers.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ SEND EMAIL ═══ -->
+<section class="tool-section" id="section-send">
+    <div class="tool-header">
+        <h2>Send Email</h2>
+        <p>Compose and transmit test emails via SMTP</p>
+    </div>
+    <form id="emailForm" enctype="multipart/form-data">
+        <div class="field-row-3">
+            <div class="module">
+                <div class="module-head"><i class="fas fa-server"></i> SMTP Config</div>
+                <div class="module-body">
+                    <div class="field"><label>Server</label><input type="text" id="smtp_server" name="smtp_server" placeholder="smtp.relay.com" required></div>
+                    <div class="field-row">
+                        <div class="field"><label>Port</label><input type="number" id="smtp_port" name="smtp_port" value="25" required></div>
+                        <div class="field"><label>Username</label><input type="text" id="username" name="username" required></div>
+                    </div>
+                    <div class="field"><label>Password</label><input type="password" id="password" name="password" required></div>
+                </div>
+            </div>
+            <div class="module">
+                <div class="module-head"><i class="fas fa-user-secret"></i> Sender Identity</div>
+                <div class="module-body">
+                    <div class="field"><label>Display Name</label><input type="text" id="from_name" name="from_name" required></div>
+                    <div class="field"><label>From Email</label><input type="email" id="from_email" name="from_email" required></div>
+                    <div class="field"><label>Reply-To</label><input type="email" id="reply_to" name="reply_to"><div class="hint">Auto-fills from sender</div></div>
+                    <div class="field">
+                        <label>Return Address (Envelope)</label>
+                        <input type="email" id="envelope_sender" name="envelope_sender" placeholder="tracking@your-legit-domain.com">
+                        <div class="hint">Bypasses SPF by using a domain you control.</div>
+                    </div>
+                </div>
+            </div>
+            <div class="module">
+                <div class="module-head"><i class="fas fa-bullseye"></i> Delivery Strategy</div>
+                <div class="module-body">
+                    <div style="font-size:13px; color:var(--soft); line-height:1.6;">
+                        <strong>Warm-up:</strong> Start with low volumes (10-50/day) on fresh IPs.<br><br>
+                        <strong>Header Injection:</strong> Adding randomized X-headers (like X-Mailer or X-Originating-IP) can help bypass basic static signatures.<br><br>
+                        <strong>Time-gapping:</strong> Use the config tab to slow down bulk-sends to mimic human activity.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="module mt-16">
+            <div class="module-head"><i class="fas fa-envelope"></i> Message</div>
+            <div class="module-body">
+                <div class="field-row-3">
+                    <div class="field"><label>To</label><input type="text" id="to_email" name="to_email" required><div class="hint">Comma-separated</div></div>
+                    <div class="field"><label>CC</label><input type="text" id="cc" name="cc"></div>
+                    <div class="field"><label>BCC</label><input type="text" id="bcc" name="bcc"></div>
+                </div>
+                <div class="field"><label>Subject</label><input type="text" id="subject" name="subject"></div>
+                <div class="field">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <label style="margin-bottom:0;">Body</label>
+                        <div style="display:flex; gap:8px; align-items:center;">
+                            <button type="button" class="btn btn-ghost btn-sm" onclick="applyEvasion('base64')" style="font-size:10px; padding:2px 8px; border:1px solid var(--border);"><i class="fas fa-magic"></i> JS Unwrapper</button>
+                            <button type="button" class="btn btn-ghost btn-sm" onclick="applyEvasion('entities')" style="font-size:10px; padding:2px 8px; border:1px solid var(--border);"><i class="fas fa-code"></i> HTML Entities</button>
+                        </div>
+                    </div>
+                    <textarea id="message" name="message" rows="10" style="font-family:monospace; font-size:12px;"></textarea>
+                </div>
+                <div class="field-row">
+                    <div class="field"><label>Attachments</label><input type="file" id="attachments" name="attachments" multiple style="padding:6px;"><div class="hint">Max 16MB. txt, pdf, images, doc</div></div>
+                    <div style="display:flex; flex-direction:column; gap:10px; justify-content:center;">
+                        <label class="checkbox-row"><input type="checkbox" id="html" name="html" checked> HTML format</label>
+                        <label class="checkbox-row"><input type="checkbox" id="add_xheaders" name="add_xheaders"> Inject X-Headers</label>
+                        <div class="field" style="margin-bottom:0;"><label>Count</label><input type="number" id="send_count" name="send_count" value="1" min="1" max="100"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="text-right mt-16" style="display:flex; justify-content:flex-end; gap:12px; align-items:center;">
+            <button type="button" class="btn btn-ghost" onclick="openForge()" style="border: 1px solid var(--border);"><i class="fas fa-hammer"></i> Forge Template</button>
+            <div style="width:1px; height:24px; background:var(--border); margin:0 4px;"></div>
+            <button type="button" class="btn btn-ghost" onclick="openEmailPreview()"><i class="fas fa-eye"></i> Preview</button>
+            <button type="submit" class="btn btn-white btn-lg"><i class="fas fa-paper-plane"></i> Send</button>
+        </div>
+    </form>
+</section>
+
+<!-- ═══ SMTP VERIFY ═══ -->
+<section class="tool-section" id="section-test">
+    <div class="tool-header"><h2>SMTP Verify</h2><p>Test server connectivity and authentication</p></div>
+    <div class="field-row">
+        <div class="module">
+            <div class="module-head"><i class="fas fa-vial"></i> Connection Test</div>
+            <div class="module-body">
+                <form id="testForm">
+                    <div class="field"><label>Server</label><input type="text" class="input" id="test_smtp_server" name="smtp_server" required></div>
+                    <div class="field-row">
+                        <div class="field"><label>Port</label><input type="number" class="input" id="test_smtp_port" name="smtp_port" value="25" required></div>
+                        <div class="field"><label>Username</label><input type="text" class="input" id="test_username" name="username" required></div>
+                    </div>
+                    <div class="field"><label>Password</label><input type="password" class="input" id="test_password" name="password" required></div>
+                    <button type="submit" class="btn btn-white btn-full">Verify Connection</button>
+                </form>
+            </div>
+        </div>
+        
+        <div class="module">
+            <div class="module-head"><i class="fas fa-book"></i> Common Ports & Protocols</div>
+            <div class="module-body">
+                <table class="data-table">
+                    <thead><tr><th>Port</th><th>Protocol</th><th>Encryption</th></tr></thead>
+                    <tbody>
+                        <tr><td>25</td><td>SMTP</td><td>None / STARTTLS</td></tr>
+                        <tr><td>465</td><td>SMTPS</td><td>Implicit SSL/TLS</td></tr>
+                        <tr><td>587</td><td>MSA</td><td>STARTTLS</td></tr>
+                        <tr><td>2525</td><td>Alt SMTP</td><td>STARTTLS</td></tr>
+                    </tbody>
+                </table>
+                <div class="hint mt-16">
+                    <i class="fas fa-info-circle"></i> <strong>Tip:</strong> Many ISPs block outbound traffic on port 25 to mitigate spam. If connection fails on port 25, attempt port 587 or 465.
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ NODE CLUSTER ═══ -->
+<section class="tool-section" id="section-servers">
+    <div class="tool-header"><h2>Node Cluster</h2><p>Bulk SMTP server testing</p></div>
+    <div class="field-row">
+        <div style="display:flex; flex-direction:column; gap:16px;">
+            <div class="module">
+                <div class="module-head"><i class="fas fa-server"></i> Cluster Upload</div>
+                <div class="module-body">
+                    <form id="serversForm">
+                        <div class="field"><label>Server List (.txt)</label><input type="file" id="smtp_file" name="smtp_file" accept=".txt" required style="padding:6px;"></div>
+                        <div class="alert-bar" style="font-size:12px;">Format: <code style="color:var(--white);">host|port|user|pass</code> — one per line</div>
+                        <button type="submit" class="btn btn-white btn-full">Start Audit</button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="module">
+                <div class="module-head"><i class="fas fa-project-diagram"></i> Load Balancing Info</div>
+                <div class="module-body">
+                    <div style="font-size:13px; color:var(--soft); line-height:1.6;">
+                        Mailsploit tests nodes concurrently. When deploying campaigns, valid nodes are aggregated into a randomized round-robin pool to distribute delivery load and mitigate IP reputation burn rates.
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div style="display:flex; flex-direction:column;">
+            <div id="serversResultsEmpty"></div>
+            <div id="serversResults" style="display:none; flex:1;">
+                <div class="module" style="height:100%;">
+                    <div class="module-head"><i class="fas fa-check-circle"></i> Live Nodes</div>
+                    <div class="module-body" id="serversList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ DOMAIN RECON ═══ -->
+<section class="tool-section" id="section-domain">
+    <div class="tool-header"><h2>Domain Recon</h2><p>SPF, DMARC, and spoofing vulnerability analysis</p></div>
+    <div class="field-row">
+        <div style="display:flex; flex-direction:column; gap:16px;">
+            <div class="module">
+                <div class="module-head"><i class="fas fa-globe"></i> Domain Check</div>
+                <div class="module-body">
+                    <form id="spoofForm">
+                        <div class="field"><label>Domain(s)</label><input type="text" id="domain_check" name="domain" placeholder="example.com, target.co" required><div class="hint">Comma-separated for bulk</div></div>
+                        <button type="submit" class="btn btn-white btn-full">Run Recon</button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="module">
+                <div class="module-head"><i class="fas fa-shield-alt"></i> DMARC Policy Impact</div>
+                <div class="module-body">
+                    <table class="data-table">
+                        <thead><tr><th>Policy (p=)</th><th>Impact</th></tr></thead>
+                        <tbody>
+                            <tr><td><span class="badge badge-fail">none</span></td><td><span style="color:var(--soft);">Monitor only. Easily spoofable.</span></td></tr>
+                            <tr><td><span class="badge badge-warn">quarantine</span></td><td><span style="color:var(--soft);">Sent to spam/junk folder.</span></td></tr>
+                            <tr><td><span class="badge badge-ok">reject</span></td><td><span style="color:var(--soft);">Blocked at gateway. Secure.</span></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div style="display:flex; flex-direction:column;">
+            <div id="spoofResultsEmpty"></div>
+            <div id="spoofResults" style="display:none; flex:1;"><div id="spoofAnalysis"></div></div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ DKIM AUDIT ═══ -->
+<section class="tool-section" id="section-dkim">
+    <div class="tool-header"><h2>DKIM Audit</h2><p>Verify DKIM selector records and key configurations</p></div>
+    <div class="field-row">
+        <div style="display:flex; flex-direction:column; gap:16px;">
+            <div class="module">
+                <div class="module-head"><i class="fas fa-key"></i> Selector Check</div>
+                <div class="module-body">
+                    <form id="dkimForm">
+                        <div class="field"><label>Domain</label><input type="text" id="dkim_domain" name="domain" required></div>
+                        <div class="field"><label>Custom Selectors</label><input type="text" id="dkim_selectors" name="selectors" placeholder="s1, default, dkim"><div class="hint">Leave empty for common selectors</div></div>
+                        <button type="submit" class="btn btn-white btn-full">Audit Keys</button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="module">
+                <div class="module-head"><i class="fas fa-search"></i> Selector Brute Force</div>
+                <div class="module-body">
+                    <div style="font-size:13px; color:var(--soft); line-height:1.6;">
+                        Unlike SPF/DMARC which reside at standard DNS roots, DKIM keys require guessing the "selector" (e.g., <code>selector._domainkey.domain.com</code>). Mailsploit automatically iterates through top providers (Google, Microsoft, SendGrid) to locate active keys.
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div style="display:flex; flex-direction:column;">
+            <div id="dkimResultsEmpty"></div>
+            <div id="dkimResults" style="display:none; flex:1;"><div id="dkimAnalysis"></div></div>
+        </div>
+    </div>
+</section>
+
+
+<!-- ═══ HEADER PARSE ═══ -->
+<section class="tool-section" id="section-headers">
+    <div class="tool-header"><h2>Header Parse</h2><p>Analyze raw email headers for security indicators</p></div>
+    <div class="field-row">
+        <div style="display:flex; flex-direction:column; gap:16px;">
+            <div class="module" style="display:flex; flex-direction:column;">
+                <div class="module-head"><i class="fas fa-code"></i> Raw Headers</div>
+                <div class="module-body" style="flex:1;">
+                    <form id="headersForm" style="display:flex; flex-direction:column; height:100%;">
+                        <div class="field" style="flex:1;"><label>Paste Headers</label><textarea id="email_headers" name="headers" style="min-height:200px;" required></textarea></div>
+                        <button type="submit" class="btn btn-white btn-full">Analyze</button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="module">
+                <div class="module-head"><i class="fas fa-clipboard-check"></i> Security Header Checklist</div>
+                <div class="module-body">
+                    <ul style="margin:0; padding-left:20px; color:var(--soft); font-size:13px; line-height:1.6;">
+                        <li><strong>Authentication-Results:</strong> Must show <code>spf=pass</code>, <code>dkim=pass</code>, <code>dmarc=pass</code>.</li>
+                        <li><strong>Received:</strong> Trace hops from bottom to top. Look for internal IPs exposed to the internet or logical gaps.</li>
+                        <li><strong>Message-ID:</strong> Verify it matches the sending domain's expected format.</li>
+                        <li><strong>X-Originating-IP:</strong> Sometimes leaks the true sender IP behind proxies/webmail.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div style="display:flex; flex-direction:column;">
+            <div id="headersResultsEmpty"></div>
+            <div id="headersResults" style="display:none; flex:1;"><div id="headersAnalysis"></div></div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ BLACKLIST CHECK ═══ -->
+<section class="tool-section" id="section-dnsbl">
+    <div class="tool-header"><h2>Blacklist Check</h2><p>Check IP/Domain against major DNSBLs</p></div>
+    <div class="field-row">
+        <div style="display:flex; flex-direction:column; gap:16px;">
+            <div class="module">
+                <div class="module-head"><i class="fas fa-ban"></i> Target</div>
+                <div class="module-body">
+                    <form id="dnsblForm">
+                        <div class="field"><label>IP or Domain</label><input type="text" id="bl_target" name="target" placeholder="1.2.3.4 or smtp.site.com" required></div>
+                        <button type="submit" class="btn btn-white btn-full">Check DNSBLs</button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="module">
+                <div class="module-head"><i class="fas fa-list-ul"></i> Common DNSBL Providers</div>
+                <div class="module-body">
+                    <div style="font-size:13px; color:var(--soft); line-height:1.6;">
+                        We currently query the following major blocklists:
+                        <ul style="margin-top:8px; padding-left:20px;">
+                            <li><code>zen.spamhaus.org</code></li>
+                            <li><code>b.barracudacentral.org</code></li>
+                            <li><code>dnsbl.sorbs.net</code></li>
+                            <li><code>bl.spamcop.net</code></li>
+                            <li><code>spam.abuse.ch</code></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div style="display:flex; flex-direction:column;">
+            <div id="dnsblResultsEmpty"></div>
+            <div id="dnsblResults" style="display:none; flex:1;"><div id="dnsblAnalysis"></div></div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ SUBDOMAIN ENUM ═══ -->
+<section class="tool-section" id="section-subdomain">
+    <div class="tool-header"><h2>Subdomain Enum</h2><p>Discover active mail infrastructure</p></div>
+    <div class="field-row">
+        <div style="display:flex; flex-direction:column; gap:16px;">
+            <div class="module">
+                <div class="module-head"><i class="fas fa-network-wired"></i> Enumerate</div>
+                <div class="module-body">
+                    <form id="subdomainForm">
+                        <div class="field"><label>Target Domain</label><input type="text" id="sub_domain" name="domain" required></div>
+                        <button type="submit" class="btn btn-white btn-full">Scan Subdomains</button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="module">
+                <div class="module-head"><i class="fas fa-satellite-dish"></i> OSINT Recon Sources</div>
+                <div class="module-body">
+                    <div style="font-size:13px; color:var(--soft); line-height:1.6;">
+                        This module aggregates data from public certificate transparency logs (crt.sh) and DNS brute-forcing to identify hidden mail servers (e.g., <code>mta2.marketing.target.com</code>) that might bypass strict main-domain SPF policies.
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div style="display:flex; flex-direction:column;">
+            <div id="subdomainResultsEmpty"></div>
+            <div id="subdomainResults" style="display:none; flex:1;"><div id="subdomainAnalysis"></div></div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ BREACH SEARCH ═══ -->
+<section class="tool-section" id="section-breach">
+    <div class="tool-header"><h2>Breach Search</h2><p>Check email against data dumps</p></div>
+    <div class="field-row">
+        <div style="display:flex; flex-direction:column; gap:16px;">
+            <div class="module">
+                <div class="module-head"><i class="fas fa-user-secret"></i> Target</div>
+                <div class="module-body">
+                    <form id="breachForm">
+                        <div class="field"><label>Email Address</label><input type="email" id="breach_email" name="email" required></div>
+                        <button type="submit" class="btn btn-white btn-full">Check Databases</button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="module">
+                <div class="module-head"><i class="fas fa-database"></i> Source Transparency</div>
+                <div class="module-body">
+                    <div style="font-size:13px; color:var(--soft); line-height:1.6;">
+                        Data is sourced via <a href="https://haveibeenpwned.com/" target="_blank" style="color:var(--accent);">HIBP API</a> and local aggregate lists (simulated). Finding an executive's email in a third-party breach often provides contextual leverage for highly targeted spear-phishing (e.g., referencing a known compromised password).
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div style="display:flex; flex-direction:column;">
+            <div id="breachResultsEmpty"></div>
+            <div id="breachResults" style="display:none; flex:1;"><div id="breachAnalysis"></div></div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ PHISHING TEMPLATES ═══ -->
+<section class="tool-section" id="section-phish">
+    <div class="tool-header"><h2>Phishing Templates</h2><p>Generate HTML login form lures</p></div>
+    <div class="field-row">
+        <div style="display:flex; flex-direction:column; gap:16px;">
+            <div class="module">
+                <div class="module-head"><i class="fas fa-file-code"></i> Brand Target</div>
+                <div class="module-body">
+                    <form id="phishForm">
+                        <div class="field">
+                            <label>Brand</label>
+                            <select id="phish_target" name="target" style="width:100%; padding:10px; background:var(--black); border:1px solid var(--border); color:white; border-radius:var(--radius);">
+                                <option value="Instagram">Instagram</option>
+                                <option value="Facebook">Facebook</option>
+                                <option value="Gmail">Gmail</option>
+                                <option value="Twitter">Twitter</option>
+                                <option value="Snapchat">Snapchat</option>
+                                <option value="Github">Github</option>
+                                <option value="Yahoo">Yahoo</option>
+                                <option value="Protonmail">Protonmail</option>
+                                <option value="Spotify">Spotify</option>
+                                <option value="Netflix">Netflix</option>
+                                <option value="Linkedin">Linkedin</option>
+                                <option value="Wordpress">Wordpress</option>
+                                <option value="Origin">Origin</option>
+                                <option value="Steam">Steam</option>
+                                <option value="Microsoft">Microsoft</option>
+                                <option value="Yandex">Yandex</option>
+                                <option value="Vk">Vk</option>
+                                <option value="MySpace">MySpace</option>
+                                <option value="Gitlab">Gitlab</option>
+                                <option value="Twitch">Twitch</option>
+                                <option value="Pinterest">Pinterest</option>
+                                <option value="Apple">Apple</option>
+                                <option value="microsoft">Microsoft 365 (Default)</option>
+                                <option value="generic">Generic Portal</option>
+                            </select>
+                        </div>
+                        <div class="field" style="margin-top:10px;">
+                            <label>Target Name <span style="font-size:10px;color:var(--muted);">(Optional)</span></label>
+                            <input type="text" id="phish_target_name" name="target_name" placeholder="John Doe">
+                        </div>
+                        <div class="field" style="margin-top:10px;">
+                            <label>Lure URL <span style="font-size:10px;color:var(--muted);">(Optional)</span></label>
+                            <input type="url" id="phish_lure_url" name="lure_url" placeholder="https://evil.com/login">
+                        </div>
+                        <button type="submit" class="btn btn-white btn-full" style="margin-top:10px;">Generate HTML</button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="module">
+                <div class="module-head"><i class="fas fa-mask"></i> OpSec & Detection Evasion</div>
+                <div class="module-body">
+                    <div style="font-size:13px; color:var(--soft); line-height:1.6;">
+                        Generated templates are dynamically obfuscated. Consider hosting payloads on reputable cloud infrastructure (e.g., Azure or AWS buckets) or domains older than 30 days to bypass initial reputation filters.
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div style="display:flex; flex-direction:column;">
+            <div id="phishResultsEmpty"></div>
+            <div id="phishResults" style="display:none; flex:1;"><div id="phishAnalysis"></div></div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ MACRO BUILDER ═══ -->
+<section class="tool-section" id="section-macro">
+    <div class="tool-header"><h2>Macro Builder</h2><p>Weaponize VBA payloads</p></div>
+    <div class="field-row">
+        <div style="display:flex; flex-direction:column; gap:16px;">
+            <div class="module">
+                <div class="module-head"><i class="fas fa-file-word"></i> Target Executable</div>
+                <div class="module-body">
+                    <form id="macroForm">
+                        <div class="field"><label>Command to Execute</label><input type="text" value="calc.exe" disabled><div class="hint">Locked to calc.exe for demonstration safety</div></div>
+                        <button type="submit" class="btn btn-white btn-full">Generate VBA</button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="module">
+                <div class="module-head"><i class="fas fa-shield-virus"></i> VBA Analysis Prevention</div>
+                <div class="module-body">
+                    <div style="font-size:13px; color:var(--soft); line-height:1.6;">
+                        Generated macros use <code>AutoOpen()</code> or <code>Document_Open()</code> triggers. To evade heuristic sandbox analysis, real-world macros often employ sleep functions, environmental keying (checking domain membership), or require user interaction (like scrolling) before payload execution.
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div style="display:flex; flex-direction:column;">
+            <div id="macroResultsEmpty"></div>
+            <div id="macroResults" style="display:none; flex:1;"><div id="macroAnalysis"></div></div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ TRACKING PIXEL ═══ -->
+<section class="tool-section" id="section-pixel">
+    <div class="tool-header"><h2>Tracking Pixel</h2><p>Create invisible 1x1 image trackers</p></div>
+    <div class="field-row">
+        <div style="display:flex; flex-direction:column; gap:16px;">
+            <div class="module">
+                <div class="module-head"><i class="fas fa-eye"></i> Generate</div>
+                <div class="module-body">
+                    <form id="pixelForm">
+                        <button type="submit" class="btn btn-white btn-full">Generate Pixel Tags</button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="module">
+                <div class="module-head"><i class="fas fa-chart-line"></i> Tracking Mechanics</div>
+                <div class="module-body">
+                    <div style="font-size:13px; color:var(--soft); line-height:1.6;">
+                        Pixels relay read receipts, IP addresses, user agents, and timestamps back to the C2 server when remote images are rendered by the client's mail application. Many modern clients (like Gmail) proxy images, obscuring the true client IP but still confirming engagement.
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div style="display:flex; flex-direction:column;">
+            <div id="pixelResultsEmpty"></div>
+            <div id="pixelResults" style="display:none; flex:1;"><div id="pixelAnalysis"></div></div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ HOMOGLYPH ═══ -->
+<section class="tool-section" id="section-homoglyph">
+    <div class="tool-header"><h2>Homoglyph Bypass</h2><p>Generate Cyrillic look-alike domains</p></div>
+    <div class="field-row">
+        <div style="display:flex; flex-direction:column; gap:16px;">
+            <div class="module">
+                <div class="module-head"><i class="fas fa-language"></i> Original Domain</div>
+                <div class="module-body">
+                    <form id="homoglyphForm">
+                        <div class="field"><label>Domain</label><input type="text" id="homo_domain" name="domain" required></div>
+                        <button type="submit" class="btn btn-white btn-full">Generate Variants</button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="module">
+                <div class="module-head"><i class="fas fa-eye-slash"></i> Look-alike Detection</div>
+                <div class="module-body">
+                    <div style="font-size:13px; color:var(--soft); line-height:1.6;">
+                        Homographs exploit IDN (Internationalized Domain Names). To prevent deception, modern browsers use "Punycode" (e.g., <code>xn--xample-hye.com</code>). However, in many email clients and plain-text editors, these Unicode strings render identically to their ASCII targets.
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div style="display:flex; flex-direction:column;">
+            <div id="homoglyphResultsEmpty"></div>
+            <div id="homoglyphResults" style="display:none; flex:1;"><div id="homoglyphAnalysis"></div></div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ HTML OBFUSCATION ═══ -->
+<section class="tool-section" id="section-obfuscate">
+    <div class="tool-header"><h2>HTML Obfuscation</h2><p>Encode email bodies to bypass filters</p></div>
+    <div class="field-row">
+        <div style="display:flex; flex-direction:column; gap:16px;">
+            <div class="module" style="display:flex; flex-direction:column;">
+                <div class="module-head"><i class="fas fa-mask"></i> Raw HTML</div>
+                <div class="module-body" style="flex:1;">
+                    <form id="obfuscateForm" style="display:flex; flex-direction:column; height:100%;">
+                        <div class="field" style="flex:1;"><label>HTML Body</label><textarea id="obf_html" name="html" style="min-height:150px;" required></textarea></div>
+                        <div class="field">
+                            <label>Mode</label>
+                            <select id="obf_mode" name="mode" style="width:100%; padding:10px; background:var(--black); border:1px solid var(--border); color:white; border-radius:var(--radius);">
+                                <option value="base64">Base64 JS Unwrapper</option>
+                                <option value="entities">HTML Entities</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-white btn-full" style="margin-top:10px;">Obfuscate</button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="module">
+                <div class="module-head"><i class="fas fa-filter"></i> Filter Evasion Techniques</div>
+                <div class="module-body">
+                    <div style="font-size:13px; color:var(--soft); line-height:1.6;">
+                        <strong>HTML Entities:</strong> Converts characters to <code>&amp;#xx;</code>. Good for simple keyword filters. Mail clients render them back to text transparently.<br><br>
+                        <strong>JS Unwrappers:</strong> Highly effective against static scanners, but requires the target mail client to support execution of embedded JavaScript (which is increasingly rare/blocked).
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div style="display:flex; flex-direction:column;">
+            <div id="obfuscateResultsEmpty"></div>
+            <div id="obfuscateResults" style="display:none; flex:1;"><div id="obfuscateAnalysis"></div></div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}

@@ -1,0 +1,305 @@
+{% extends "base.html" %}
+
+{% block title %}Features | Mailsploit{% endblock %}
+
+{% block content %}
+
+<!-- ═══ FEATURES HERO ═══ -->
+<section class="tool-section active pt-20" id="section-features">
+    <div class="hero" style="padding-top: 60px; padding-bottom: 80px;">
+        <div class="hero-badge">
+            <i class="fas fa-layer-group"></i> THE MAILSPLOIT ARSENAL
+        </div>
+        <h1 class="hero-title">Comprehensive visibility.<br><span class="accent-glow">Tactical superiority.</span></h1>
+        <p class="hero-subtitle">Equipping you with a modular suite of intelligence, auditing, and spoofing tools to uncover deep misconfigurations in corporate email infrastructure.</p>
+    </div>
+
+    <!-- ═══ ALTERNATING SAAS LAYOUT ═══ -->
+    <div class="features-container">
+        
+        <!-- FEATURE ROW 1: Custom SMTP Relay (Text Left, Image Right) -->
+        <div class="feature-row">
+            <div class="feature-content">
+                <div class="feature-pill" style="color: #ef4444; background: rgba(239, 68, 68, 0.1);">
+                    <i class="fas fa-paper-plane"></i> Exploit
+                </div>
+                <h2>Custom SMTP Relay</h2>
+                <p>
+                    The core exploitation engine. Connect to any verified open relay or authorized node and transmit intricate payloads. Customize From lines, append dynamic X-headers for evasion, and attach malicious documents to fully test network persistence.
+                </p>
+                <ul class="feature-list">
+                    <li><i class="fas fa-check-circle" style="color: #ef4444;"></i> Real-time SMTP authentication</li>
+                    <li><i class="fas fa-check-circle" style="color: #ef4444;"></i> Dynamic X-Header injection</li>
+                    <li><i class="fas fa-check-circle" style="color: #ef4444;"></i> Multi-part MIME attachments (Doc/Macro)</li>
+                </ul>
+                <button class="btn btn-primary mt-16" style="background: #ef4444; color: white;" onclick="window.location.href='/#section-send'">Compose Payload <i class="fas fa-arrow-right"></i></button>
+            </div>
+            <div class="feature-visual">
+                <div class="glass-panel" style="border-color: rgba(239, 68, 68, 0.2);">
+                    <div class="mock-header">
+                        <div class="dot red"></div>
+                        <div class="dot yellow"></div>
+                        <div class="dot green"></div>
+                        <div class="mock-title">smtp-relay.log</div>
+                    </div>
+                    <div class="mock-body terminal-style">
+                        <span style="color: #ef4444;">[SYSTEM] Initializing Custom SMTP Relay...</span><br>
+                        <span style="color:rgba(255,255,255,0.7);">Payload transmission ready</span><br>
+                        <span style="color:rgba(255,255,255,0.7);">Relay connection established</span><br>
+                        <br>
+                        <span style="color:var(--white);">> EHLO target.com</span><br>
+                        <span style="color:var(--muted);">250-node.local Hello</span><br>
+                        <span style="color:var(--white);">> MAIL FROM: &lt;ceo@target.com&gt;</span><br>
+                        <span style="color:var(--muted);">250 OK</span><br>
+                        <span style="color:var(--white);">> RCPT TO: &lt;employee@target.com&gt;</span><br>
+                        <span style="color:var(--muted);">250 OK</span><br>
+                        <br>
+                        <span style="color: #ef4444;">[SUCCESS] Relay transaction complete.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FEATURE ROW 2: Domain Reconnaissance (Image Left, Text Right) -->
+        <div class="feature-row reverse">
+            <div class="feature-content">
+                <div class="feature-pill" style="color: #fb923c; background: rgba(251, 146, 60, 0.1);">
+                    <i class="fas fa-globe"></i> Intelligence
+                </div>
+                <h2>Domain Reconnaissance</h2>
+                <p>
+                    Perform instant vulnerability checks on any target. Our engine queries live TXT records to map intricate nested SPF `include` statements, analyze DMARC `p=` and `sp=` policies, and detect critical spoofing paths.
+                </p>
+                <ul class="feature-list">
+                    <li><i class="fas fa-check-circle" style="color: #fb923c;"></i> Detect weak DMARC policies</li>
+                    <li><i class="fas fa-check-circle" style="color: #fb923c;"></i> Map nested SPF includes recursively</li>
+                    <li><i class="fas fa-check-circle" style="color: #fb923c;"></i> Subdomain spoofing vulnerability analysis</li>
+                </ul>
+                <button class="btn btn-primary mt-16" style="background: #fb923c; color: white;" onclick="window.location.href='/#section-domain'">Launch Tool <i class="fas fa-arrow-right"></i></button>
+            </div>
+            <div class="feature-visual">
+                <div class="glass-panel" style="border-color: rgba(251, 146, 60, 0.2);">
+                    <div class="mock-header">
+                        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+                        <div class="mock-title">Terminal - Recon</div>
+                    </div>
+                    <div class="mock-body terminal-style">
+                        <span style="color: #fb923c; font-weight: 600;">></span> Analyzing target.com...<br>
+                        <span style="color: var(--subtle);">[i] Resolving SPF... Found (v=spf1 include:_spf.target.com ~all)</span><br>
+                        <span style="color: var(--subtle);">[i] Resolving DMARC... Found (v=DMARC1; p=none; sp=none;)</span><br>
+                        <br>
+                        <span style="color: #ef4444; background: rgba(239, 68, 68, 0.1); padding: 2px 6px; border-radius: 4px;">[!] VULNERABLE: Subdomains lack strict enforcement.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FEATURE ROW 3: Phishing Forge (Text Left, Image Right) -->
+        <div class="feature-row reveal-on-scroll">
+            <div class="feature-content">
+                <div class="feature-pill" style="color: #ef4444; background: rgba(239, 68, 68, 0.1);">
+                    <i class="fas fa-file-code"></i> Weaponize
+                </div>
+                <h2>Phishing Forge</h2>
+                <p>
+                    Generate dynamic, pre-compiled HTML login forms mimicking major platforms (O365, Google Workspace, Azure AD) for authorized red team exercises. Integrate payload macros seamlessly.
+                </p>
+                <ul class="feature-list">
+                    <li><i class="fas fa-check-circle" style="color: #ef4444;"></i> 20+ Premium Brand Templates</li>
+                    <li><i class="fas fa-check-circle" style="color: #ef4444;"></i> Native Payload Integration for Word/Excel</li>
+                    <li><i class="fas fa-check-circle" style="color: #ef4444;"></i> Javascript Obfuscation Layer</li>
+                </ul>
+                <button class="btn btn-outline mt-16" onclick="window.location.href='/#section-phish'">Explore Forge</button>
+            </div>
+            <div class="feature-visual">
+                <div class="glass-panel" style="padding: 0; overflow: hidden; display: flex; flex-direction: column; background: rgba(10, 10, 10, 0.8);">
+                    <div class="mock-header" style="border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.5); padding: 12px 16px;">
+                        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+                        <div style="font-size: 11px; color: var(--muted); font-weight: 500; letter-spacing: 0.05em; margin-left: auto; margin-right: auto;">O365_LURE.HTML</div>
+                    </div>
+                    <div style="display: flex; height: 260px;">
+                        <div style="width: 64px; border-right: 1px solid var(--border); background: rgba(0,0,0,0.3); padding: 16px 0; display: flex; flex-direction: column; gap: 16px; align-items: center;">
+                            <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(239, 68, 68, 0.2); display: flex; align-items: center; justify-content: center; color: #ef4444;"><i class="fab fa-microsoft"></i></div>
+                            <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(255, 255, 255, 0.05); display: flex; align-items: center; justify-content: center; color: var(--muted);"><i class="fab fa-google"></i></div>
+                            <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(255, 255, 255, 0.05); display: flex; align-items: center; justify-content: center; color: var(--muted);"><i class="fab fa-apple"></i></div>
+                        </div>
+                        <div style="flex: 1; padding: 20px; position: relative;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 20px; align-items: center;">
+                                <div style="font-size: 14px; font-weight: 600; color: var(--white);">Microsoft 365 Login</div>
+                                <div style="font-size: 10px; padding: 4px 10px; border-radius: 12px; background: rgba(34, 197, 94, 0.1); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.2);">Deployed</div>
+                            </div>
+                            <div style="width: 100%; height: 6px; background: var(--border); border-radius: 3px; margin-bottom: 12px;"></div>
+                            <div style="width: 75%; height: 6px; background: rgba(255, 255, 255, 0.05); border-radius: 3px; margin-bottom: 12px;"></div>
+                            <div style="width: 85%; height: 6px; background: rgba(255, 255, 255, 0.05); border-radius: 3px; margin-bottom: 12px;"></div>
+                            <div style="width: 50%; height: 6px; background: rgba(255, 255, 255, 0.05); border-radius: 3px; margin-bottom: 24px;"></div>
+
+                            <div style="margin-top: auto; padding: 12px 16px; background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; display: flex; align-items: center; gap: 12px; position: absolute; bottom: 20px; left: 20px; right: 20px;">
+                                <i class="fas fa-file-word" style="color: #ef4444; font-size: 20px;"></i>
+                                <div>
+                                    <div style="font-size: 12px; color: var(--white); font-weight: 600; margin-bottom: 2px;">invoice_Q3.docm</div>
+                                    <div style="font-size: 10px; color: var(--muted);">Macro Payload Attached target: calc.exe</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FEATURE ROW 4: SMTP Clustering & Header Parse (Image Left, Text Right) -->
+        <div class="feature-row reverse reveal-on-scroll">
+            <div class="feature-content">
+                <div class="feature-pill" style="color: #3b82f6; background: rgba(59, 130, 246, 0.1);">
+                    <i class="fas fa-server"></i> Auditing
+                </div>
+                <h2>Detailed Header & SMTP Analysis</h2>
+                <p>
+                    Decompile raw email headers to trace internal hop IPs, proxy layers, and authentication results logs. Upload massive lists of potentially compromised or open-relay SMTP credentials to automatically build an active sender pool via concurrent workers.
+                </p>
+                <ul class="feature-list">
+                    <li><i class="fas fa-check-circle" style="color: #3b82f6;"></i> DKIM key validation and brute-forcing</li>
+                    <li><i class="fas fa-check-circle" style="color: #3b82f6;"></i> Automated node clustering</li>
+                    <li><i class="fas fa-check-circle" style="color: #3b82f6;"></i> Hop tracing and timeline generation</li>
+                </ul>
+                <button class="btn btn-outline mt-16" onclick="window.location.href='/#section-servers'">View Cluster Tools</button>
+            </div>
+            <div class="feature-visual">
+                <div class="glass-panel" style="padding: 0; overflow: hidden; display: flex; flex-direction: column; background: rgba(10, 10, 10, 0.8);">
+                    <div style="padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.5);">
+                        <div style="font-size: 13px; font-weight: 600; color: var(--white); display: flex; align-items: center;"><span style="display:inline-block; width:8px; height:8px; background:#3b82f6; border-radius:50%; margin-right:8px; box-shadow: 0 0 10px #3b82f6;"></span> Live Node Cluster</div>
+                        <div style="font-size: 12px; color: var(--muted);">1,911 Active / 539 Failed</div>
+                    </div>
+                    <div style="padding: 0; display: flex; flex-direction: column;">
+                        <!-- Node 1 -->
+                        <div style="padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.03); display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-size: 13px; color: var(--white); font-family: var(--mono); margin-bottom: 4px;">smtp.eu-west-1.cloud...</div>
+                                <div style="font-size: 11px; color: var(--muted);">Port 587 &bull; STARTTLS</div>
+                            </div>
+                            <div style="padding: 4px 10px; border-radius: 4px; background: rgba(34, 197, 94, 0.1); color: #22c55e; font-size: 11px; font-weight: 600; border: 1px solid rgba(34, 197, 94, 0.2);">Healthy (12ms)</div>
+                        </div>
+                        <!-- Node 2 -->
+                        <div style="padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.03); display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-size: 13px; color: var(--white); font-family: var(--mono); margin-bottom: 4px;">mail.corporate.target...</div>
+                                <div style="font-size: 11px; color: var(--muted);">Port 25 &bull; No Auth</div>
+                            </div>
+                            <div style="padding: 4px 10px; border-radius: 4px; background: rgba(59, 130, 246, 0.1); color: #3b82f6; font-size: 11px; font-weight: 600; border: 1px solid rgba(59, 130, 246, 0.2);">Open Relay</div>
+                        </div>
+                        <!-- Node 3 -->
+                        <div style="padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.03); display: flex; justify-content: space-between; align-items: center; opacity: 0.6;">
+                            <div>
+                                <div style="font-size: 13px; color: var(--muted); text-decoration: line-through; font-family: var(--mono); margin-bottom: 4px;">smtp.legacy-node.internal</div>
+                                <div style="font-size: 11px; color: var(--muted);">Port 465 &bull; Implicit SSL</div>
+                            </div>
+                            <div style="padding: 4px 10px; border-radius: 4px; background: rgba(239, 68, 68, 0.1); color: #ef4444; font-size: 11px; font-weight: 600; border: 1px solid rgba(239, 68, 68, 0.2);">Timeout</div>
+                        </div>
+                        <!-- Node 4 -->
+                        <div style="padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-size: 13px; color: var(--white); font-family: var(--mono); margin-bottom: 4px;">mx1.target.com</div>
+                                <div style="font-size: 11px; color: var(--muted);">Port 25 &bull; STARTTLS</div>
+                            </div>
+                            <div style="padding: 4px 10px; border-radius: 4px; background: rgba(34, 197, 94, 0.1); color: #22c55e; font-size: 11px; font-weight: 600; border: 1px solid rgba(34, 197, 94, 0.2);">Healthy (24ms)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FEATURE ROW 5: Subdomain Enumeration (Text Left, Image Right) -->
+        <div class="feature-row reveal-on-scroll">
+            <div class="feature-content">
+                <div class="feature-pill" style="color: #a855f7; background: rgba(168, 85, 247, 0.1);">
+                    <i class="fas fa-network-wired"></i> Recon
+                </div>
+                <h2>Subdomain Enumeration</h2>
+                <p>
+                    Leverage Certificate Transparency (CT) logs to rapidly uncover shadow IT infrastructure. Attackers often find spoofing vulnerabilities on forgotten or unmapped development subdomains that lack explicit DMARC `sp=` enforcement policies.
+                </p>
+                <ul class="feature-list">
+                    <li><i class="fas fa-check-circle" style="color: #a855f7;"></i> Instant CT log querying via crt.sh</li>
+                    <li><i class="fas fa-check-circle" style="color: #a855f7;"></i> Identify unmonitored endpoints</li>
+                    <li><i class="fas fa-check-circle" style="color: #a855f7;"></i> Clean, actionable target lists</li>
+                </ul>
+                <button class="btn btn-outline mt-16" onclick="window.location.href='/#section-subdomain'">Start Enumeration</button>
+            </div>
+            <div class="feature-visual">
+                <div class="glass-panel" style="padding: 24px; background: rgba(10, 10, 10, 0.8);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px;">
+                        <div style="font-size: 15px; font-weight: 600; color: var(--pure);">Infrastructure Map</div>
+                        <div style="display:flex; gap: 6px;">
+                            <div style="width: 28px; height: 28px; border-radius: 4px; background: rgba(168, 85, 247, 0.2); display: flex; justify-content: center; align-items: center; color: #a855f7; font-size: 12px; border: 1px solid rgba(168, 85, 247, 0.3);"><i class="fas fa-project-diagram"></i></div>
+                            <div style="width: 28px; height: 28px; border-radius: 4px; background: rgba(255, 255, 255, 0.05); display: flex; justify-content: center; align-items: center; color: var(--muted); font-size: 12px; border: 1px solid transparent;"><i class="fas fa-list"></i></div>
+                        </div>
+                    </div>
+
+                    <div style="position: relative; padding-left: 24px; border-left: 2px solid rgba(168, 85, 247, 0.3);">
+                        <!-- Root -->
+                        <div style="position: relative; margin-bottom: 24px;">
+                            <div style="position: absolute; left: -31px; top: 10px; width: 12px; height: 2px; background: rgba(168, 85, 247, 0.3);"></div>
+                            <div style="font-size: 14px; color: var(--white); font-weight: 600;">target.com <span style="font-size: 11px; color: var(--muted); font-weight: 400; margin-left: 12px;">(Protected)</span></div>
+                        </div>
+                        
+                        <!-- Child 1 -->
+                        <div style="position: relative; margin-bottom: 24px; margin-left: 20px; padding-left: 20px; border-left: 1px solid rgba(255,255,255,0.1);">
+                            <div style="position: absolute; left: 0; top: 12px; width: 16px; height: 1px; background: rgba(255,255,255,0.1);"></div>
+                            <div style="font-size: 13px; color: var(--white); font-family: var(--mono); margin-bottom: 6px;">vpn.target.com</div>
+                            <div style="font-size: 11px; color: var(--muted);">A: 104.22.81.199</div>
+                        </div>
+
+                        <!-- Child 2 -->
+                        <div style="position: relative; margin-bottom: 24px; margin-left: 20px; padding-left: 20px; border-left: 1px solid rgba(255,255,255,0.1);">
+                            <div style="position: absolute; left: 0; top: 12px; width: 16px; height: 1px; background: rgba(255,255,255,0.1);"></div>
+                            <div style="font-size: 13px; color: #a855f7; font-family: var(--mono); font-weight: 600; margin-bottom: 8px;">legacy-mail.target.com</div>
+                            <div style="display: flex; gap: 8px;">
+                                <span style="font-size: 10px; padding: 2px 8px; background: rgba(239, 68, 68, 0.1); color: #ef4444; border-radius: 4px; border: 1px solid rgba(239, 68, 68, 0.2);">SPF: ~all</span>
+                                <span style="font-size: 10px; padding: 2px 8px; background: rgba(239, 68, 68, 0.1); color: #ef4444; border-radius: 4px; border: 1px solid rgba(239, 68, 68, 0.2);">DMARC: None</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Child 3 -->
+                        <div style="position: relative; margin-left: 20px; padding-left: 20px;">
+                            <div style="position: absolute; left: 0; top: -20px; width: 1px; height: 32px; background: rgba(255,255,255,0.1);"></div>
+                            <div style="position: absolute; left: 0; top: 12px; width: 16px; height: 1px; background: rgba(255,255,255,0.1);"></div>
+                            <div style="font-size: 13px; color: var(--white); font-family: var(--mono); margin-bottom: 6px;">dev-api.target.com</div>
+                            <div style="font-size: 11px; color: var(--muted);">CNAME: ext-lb-01.aws...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ═══ MINOR UTILITIES GRID ═══ -->
+    <div class="utilities-section" style="padding: 80px 24px; max-width: 1200px; margin: 0 auto; border-top: 1px solid var(--border); margin-top: 40px;">
+        <div class="text-center mb-16">
+            <h3 style="font-size: 24px; color: var(--pure); margin-bottom: 8px;">Ancillary Utilities</h3>
+            <p style="color: var(--subtle); font-size: 15px;">Targeted tools for granular operations.</p>
+        </div>
+        
+        <div class="simple-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 40px;">
+            <div class="simple-card" onclick="window.location.href='/#section-pixel'">
+                <i class="fas fa-eye" style="font-size: 24px; color: var(--muted); margin-bottom: 16px;"></i>
+                <h4 style="font-size: 16px; margin-bottom: 8px; color: var(--pure);">Tracking Pixels</h4>
+                <p style="font-size: 14px; color: var(--subtle); line-height: 1.6;">Embed invisible 1x1 image tags mapped to your C2 to leak the target's IP, User-Agent, and verify read-receipts.</p>
+            </div>
+            
+            <div class="simple-card" onclick="window.location.href='/#section-homoglyph'">
+                <i class="fas fa-language" style="font-size: 24px; color: var(--muted); margin-bottom: 16px;"></i>
+                <h4 style="font-size: 16px; margin-bottom: 8px; color: var(--pure);">Homoglyph Gen</h4>
+                <p style="font-size: 14px; color: var(--subtle); line-height: 1.6;">Generate Cyrillic domain bypasses visually identical to target domains to evade rudimentary string-matching filters.</p>
+            </div>
+            
+            <div class="simple-card" onclick="window.location.href='/#section-dnsbl'">
+                <i class="fas fa-ban" style="font-size: 24px; color: var(--muted); margin-bottom: 16px;"></i>
+                <h4 style="font-size: 16px; margin-bottom: 8px; color: var(--pure);">Reputation Scan</h4>
+                <p style="font-size: 14px; color: var(--subtle); line-height: 1.6;">Query top DNSBL providers automatically to ensure your IP or SMTP node maintains a pristine sending reputation.</p>
+            </div>
+        </div>
+    </div>
+
+</section>
+
+{% endblock %}
