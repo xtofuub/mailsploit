@@ -35,8 +35,8 @@ function switchSection(id) {
 
         // Sync SMTP fields if applicable
         if (id === 'test') {
-            ['smtp_server','smtp_port','username','password'].forEach(f => {
-                const s = document.getElementById(f), t = document.getElementById('test_'+f);
+            ['smtp_server', 'smtp_port', 'username', 'password'].forEach(f => {
+                const s = document.getElementById(f), t = document.getElementById('test_' + f);
                 if (s && t) t.value = s.value;
             });
         }
@@ -71,15 +71,15 @@ async function applyForgeToEmail() {
         if (toEmail) tn = toEmail.split(',')[0].trim().split('@')[0];
     }
     const lu = document.getElementById('modal_phish_url').value.trim();
-    
+
     showLoading('Forging template...');
     try {
-        const r = await fetch('/forge_phish', { 
-            method:'POST', 
-            headers:{'Content-Type':'application/json'}, 
-            body:JSON.stringify({target:t, target_name:tn, lure_url:lu}) 
+        const r = await fetch('/forge_phish', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ target: t, target_name: tn, lure_url: lu })
         });
-        const data = await r.json(); 
+        const data = await r.json();
         hideLoading();
         if (data.success) {
             const msg = document.getElementById('message');
@@ -91,9 +91,9 @@ async function applyForgeToEmail() {
         } else {
             toast(data.error, 'fail');
         }
-    } catch (err) { 
-        hideLoading(); 
-        toast('Error: ' + err.message, 'fail'); 
+    } catch (err) {
+        hideLoading();
+        toast('Error: ' + err.message, 'fail');
     }
 }
 
@@ -133,20 +133,20 @@ function closeConfig() { document.getElementById('configOverlay')?.classList.rem
 function saveConfig() {
     const color = document.getElementById('cfgAccent').value;
     const speed = parseFloat(document.getElementById('cfgSpeed').value);
-    
+
     // Apply changes
     document.documentElement.style.setProperty('--accent-glow-primary', color);
     window.bgSettings.speed = speed;
-    
+
     // Update Hex and Slider UI
     const hexDisp = document.getElementById('accentHex');
     if (hexDisp) hexDisp.textContent = color.toUpperCase();
     const speedDisp = document.getElementById('speedVal');
     if (speedDisp) speedDisp.textContent = speed + 'x';
-    
+
     // Persist
     localStorage.setItem('ms_config', JSON.stringify({ color, speed }));
-    
+
     closeConfig();
     toast('Settings applied', 'ok');
 }
@@ -156,7 +156,7 @@ function resetConfig() {
     // Restore defaults
     document.documentElement.style.removeProperty('--accent-glow-primary');
     window.bgSettings.speed = 0.8;
-    
+
     // Update inputs if they exist
     const accent = document.getElementById('cfgAccent');
     if (accent) {
@@ -168,7 +168,7 @@ function resetConfig() {
         speed.value = 0.8;
         document.getElementById('speedVal').textContent = '0.8x';
     }
-    
+
     toast('Defaults restored', 'ok');
 }
 
@@ -179,9 +179,32 @@ function loadConfig() {
         if (config.color) {
             document.documentElement.style.setProperty('--accent-glow-primary', config.color);
             // Also apply to --pure if needed by Neural Bg
-            document.documentElement.style.setProperty('--pure', config.color); 
+            document.documentElement.style.setProperty('--pure', config.color);
         }
         if (config.speed) window.bgSettings.speed = config.speed;
+    }
+}
+
+// ── SMTP Credentials Persistence ─────────────────────────
+const smtpFields = ['smtp_server', 'smtp_port', 'username', 'password'];
+
+function saveCredentials() {
+    const creds = {};
+    smtpFields.forEach(f => {
+        const el = document.getElementById(f);
+        if (el) creds[f] = el.value;
+    });
+    localStorage.setItem('ms_smtp_creds', JSON.stringify(creds));
+}
+
+function loadCredentials() {
+    const saved = localStorage.getItem('ms_smtp_creds');
+    if (saved) {
+        const creds = JSON.parse(saved);
+        smtpFields.forEach(f => {
+            const el = document.getElementById(f);
+            if (el && creds[f]) el.value = creds[f];
+        });
     }
 }
 
@@ -214,7 +237,7 @@ function inc(key) {
     if (el) el.textContent = v;
 }
 function loadStats() {
-    ['Emails','Servers','Domains','Headers'].forEach(k => {
+    ['Emails', 'Servers', 'Domains', 'Headers'].forEach(k => {
         const el = document.getElementById('stat' + k);
         if (el) el.textContent = localStorage.getItem('sk_' + k.toLowerCase()) || '0';
     });
@@ -236,9 +259,31 @@ document.addEventListener('DOMContentLoaded', () => {
         if (f) f.addEventListener('submit', e => { e.preventDefault(); fn(); });
     });
 
-    // Auto-fill reply-to
-    const fe = document.getElementById('from_email'), rt = document.getElementById('reply_to');
-    if (fe && rt) fe.addEventListener('blur', () => { if (!rt.value) rt.value = fe.value; });
+    // Auto-fill sender identity fields
+    const fe = document.getElementById('from_email');
+    const rt = document.getElementById('reply_to');
+    const es = document.getElementById('envelope_sender');
+
+    if (fe) {
+        fe.addEventListener('input', () => {
+            // Only sync if the fields are empty or currently match the old value (simplified: only if not manually touched)
+            // For simplicity and user request "always put the same", we'll sync if they haven't been manually changed to something else
+            if (es && (!es.value || es.dataset.synced === 'true')) {
+                es.value = fe.value;
+                es.dataset.synced = 'true';
+            }
+        });
+    }
+
+    // Mark as manually changed to stop auto-sync
+    if (es) {
+        es.addEventListener('input', () => {
+            es.dataset.synced = 'false';
+        });
+        es.addEventListener('blur', () => {
+            if (es.value === fe.value) es.dataset.synced = 'true';
+        });
+    }
 
     // Password toggles
     document.querySelectorAll('input[type="password"]').forEach(p => {
@@ -255,8 +300,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Neural Background Init
     initNeuralBackground('bg-container', '#a3a3a3', 400, 0.8, 0.15);
 
-    // Initial Config Load
+    // Initial Config & Creds Load
     loadConfig();
+    loadCredentials();
+
+    // Attach listeners for credential saving
+    smtpFields.forEach(f => {
+        const el = document.getElementById(f);
+        if (el) el.addEventListener('input', saveCredentials);
+    });
 
     // Config Listeners
     const accentInput = document.getElementById('cfgAccent');
@@ -281,13 +333,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const item = trigger.closest('.accordion-item');
             const content = item.querySelector('.accordion-content');
             const isOpen = item.classList.contains('open');
-            
+
             // Close all other accordions (optional: remove for multi-open)
             document.querySelectorAll('.accordion-item').forEach(otherItem => {
                 otherItem.classList.remove('open');
                 otherItem.querySelector('.accordion-content').style.maxHeight = null;
             });
-            
+
             // Toggle current one
             if (!isOpen) {
                 item.classList.add('open');
@@ -301,7 +353,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (hash && hash.startsWith('#section-')) {
         const sectionId = hash.replace('#section-', '');
         switchSection(sectionId);
-        
+
         // Minor delay to ensure smooth scroll if needed, though switchSection does scrollTo(0,0)
         setTimeout(() => {
             const el = document.getElementById('section-' + sectionId);
@@ -346,7 +398,7 @@ async function testServers() {
 async function checkDomain() {
     let rawInput = document.getElementById('domain_check').value.trim();
     if (!rawInput) return toast('Enter domain(s) or paste text containing domains', 'fail');
-    
+
     // Re-fang domains (e.g. example[.]com -> example.com)
     rawInput = rawInput.replace(/\[\.\]/g, '.');
 
@@ -360,15 +412,15 @@ async function checkDomain() {
     const ad = document.getElementById('spoofAnalysis'), rd = document.getElementById('spoofResults');
     if (ad) ad.innerHTML = '<div style="color:var(--muted);font-size:12px;">Analyzing ' + extractedDomains.length + ' domain(s)...</div>';
     if (rd) rd.style.display = 'block';
-    
+
     showLoading('Running recon...');
     try {
         let d;
         if (extractedDomains.length > 1) {
-            const r = await fetch('/check_multiple_domains', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({domains: extractedDomains.join(',')}) });
+            const r = await fetch('/check_multiple_domains', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ domains: extractedDomains.join(',') }) });
             d = await r.json();
         } else {
-            const r = await fetch('/check_spoofing', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({domain: extractedDomains[0]}) });
+            const r = await fetch('/check_spoofing', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ domain: extractedDomains[0] }) });
             d = await r.json();
         }
         hideLoading();
@@ -387,7 +439,7 @@ async function checkDKIM() {
     const req = { domain: dom }; if (sel) req.selectors = sel.split(',').map(s => s.trim());
     showLoading('Checking DKIM...');
     try {
-        const r = await fetch('/check_dkim', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(req) });
+        const r = await fetch('/check_dkim', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(req) });
         const d = await r.json(); hideLoading();
         if (d.success) { inc('domains'); renderDKIM(d.analysis); }
         else toast(d.error, 'fail');
@@ -402,7 +454,7 @@ async function analyzeHeaders() {
     if (rd) rd.style.display = 'block';
     showLoading('Analyzing headers...');
     try {
-        const r = await fetch('/analyze_headers', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({headers:h}) });
+        const r = await fetch('/analyze_headers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ headers: h }) });
         const d = await r.json(); hideLoading();
         if (d.success) { inc('headers'); renderHeaders(d.analysis); }
         else toast(d.error, 'fail');
@@ -417,7 +469,7 @@ async function auditDNSBL() {
     if (rd) rd.style.display = 'block';
     showLoading('Checking blacklist...');
     try {
-        const r = await fetch('/audit_dnsbl', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({target:t}) });
+        const r = await fetch('/audit_dnsbl', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ target: t }) });
         const d = await r.json(); hideLoading();
         if (d.success) renderDNSBL(d.results, t);
         else toast(d.error, 'fail');
@@ -432,7 +484,7 @@ async function enumSubdomains() {
     if (rd) rd.style.display = 'block';
     showLoading('Scanning subdomains...');
     try {
-        const r = await fetch('/intel_subdomain', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({domain:d}) });
+        const r = await fetch('/intel_subdomain', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ domain: d }) });
         const data = await r.json(); hideLoading();
         if (data.success) renderSubdomains(data, d);
         else toast(data.error, 'fail');
@@ -447,7 +499,7 @@ async function searchBreach() {
     if (rd) rd.style.display = 'block';
     showLoading('Searching breaches...');
     try {
-        const r = await fetch('/intel_breach', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email:e}) });
+        const r = await fetch('/intel_breach', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: e }) });
         const data = await r.json(); hideLoading();
         if (data.success) renderBreach(data);
         else toast(data.error, 'fail');
@@ -467,7 +519,7 @@ async function generatePhish() {
     if (rd) rd.style.display = 'block';
     showLoading('Generating template...');
     try {
-        const r = await fetch('/forge_phish', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({target:t, target_name:tn, lure_url:lu}) });
+        const r = await fetch('/forge_phish', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ target: t, target_name: tn, lure_url: lu }) });
         const data = await r.json(); hideLoading();
         if (data.success) renderPhish(data);
         else toast(data.error, 'fail');
@@ -480,7 +532,7 @@ async function generateMacro() {
     if (rd) rd.style.display = 'block';
     showLoading('Building macro...');
     try {
-        const r = await fetch('/forge_macro', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({command:"calc.exe"}) });
+        const r = await fetch('/forge_macro', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ command: "calc.exe" }) });
         const data = await r.json(); hideLoading();
         if (data.success) renderMacro(data);
         else toast(data.error, 'fail');
@@ -493,7 +545,7 @@ async function generatePixel() {
     if (rd) rd.style.display = 'block';
     showLoading('Generating pixel...');
     try {
-        const r = await fetch('/forge_pixel', { method:'POST' });
+        const r = await fetch('/forge_pixel', { method: 'POST' });
         const data = await r.json(); hideLoading();
         if (data.success) renderPixel(data);
         else toast(data.error, 'fail');
@@ -508,7 +560,7 @@ async function generateHomoglyph() {
     if (rd) rd.style.display = 'block';
     showLoading('Generating homoglyphs...');
     try {
-        const r = await fetch('/bypass_homoglyph', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({domain:d}) });
+        const r = await fetch('/bypass_homoglyph', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ domain: d }) });
         const data = await r.json(); hideLoading();
         if (data.success) renderHomoglyph(data);
         else toast(data.error, 'fail');
@@ -524,7 +576,7 @@ async function obfuscateHtml() {
     if (rd) rd.style.display = 'block';
     showLoading('Obfuscating HTML...');
     try {
-        const r = await fetch('/bypass_html', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({html:h, mode:m}) });
+        const r = await fetch('/bypass_html', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ html: h, mode: m }) });
         const data = await r.json(); hideLoading();
         if (data.success) renderObfuscated(data);
         else toast(data.error, 'fail');
@@ -559,7 +611,7 @@ function renderRecon(a) {
     if (a.dmarc.subdomain_vulnerable) {
         issuesHtml += `<tr><td>${issueCount++}</td><td>Insecure DMARC sub-domain 'sp' qualifier</td><td>The DMARC policy 'sp' qualifier for sub-domains is set to "none" or undefined. If the DMARC policy is neither "reject" nor "quarantine", spoofed emails from sub-domains are likely to be accepted.</td><td>High</td></tr>`;
     }
-    
+
     const issuesTable = issuesHtml ? `
         <div style="margin-top: 16px; overflow-x: auto; padding-bottom: 8px;">
             <table class="data-table" style="min-width: 600px;">
@@ -575,27 +627,27 @@ function renderRecon(a) {
         </div>
         <div class="module-body">
             <div style="font-size: 12px; color: var(--soft); margin-bottom: 8px; word-break: break-all;">
-                <span style="color: var(--muted); font-weight: bold;">SPF Record:</span> ${a.spf.record||'Not found'}
+                <span style="color: var(--muted); font-weight: bold;">SPF Record:</span> ${a.spf.record || 'Not found'}
             </div>
             <div style="font-size: 12px; color: var(--soft); margin-bottom: 16px; word-break: break-all;">
-                <span style="color: var(--muted); font-weight: bold;">DMARC Record:</span> ${a.dmarc.record||'Not found'}
+                <span style="color: var(--muted); font-weight: bold;">DMARC Record:</span> ${a.dmarc.record || 'Not found'}
             </div>
             ${issuesTable}
-            ${a.recommendations.length ? '<div style="margin-top:16px;font-size:12px;color:var(--soft);"><strong>Recommendations:</strong><ul style="margin:8px 0 0 16px;">'+a.recommendations.map(r=>'<li style="margin-bottom:4px;">'+r+'</li>').join('')+'</ul></div>' : ''}
+            ${a.recommendations.length ? '<div style="margin-top:16px;font-size:12px;color:var(--soft);"><strong>Recommendations:</strong><ul style="margin:8px 0 0 16px;">' + a.recommendations.map(r => '<li style="margin-bottom:4px;">' + r + '</li>').join('') + '</ul></div>' : ''}
         </div>
     </div>`;
 }
 
 function renderMultiRecon(res) {
     const ad = document.getElementById('spoofAnalysis');
-    
+
     // Build accordion items instead of a table
     const accordionHtml = res.domains.map((d, index) => {
         const bdg = d.overall_status === 'secure' ? 'badge-ok' : d.overall_status === 'partially_secure' ? 'badge-warn' : 'badge-fail';
         const stText = d.overall_status.toUpperCase().replace('_', ' ');
         const spfBdg = d.spf.status === 'present' ? 'badge-ok' : 'badge-fail';
         const dmarcBdg = d.dmarc.vulnerable ? 'badge-fail' : 'badge-ok';
-        
+
         // Build Issues Table rows if vulnerable
         let issuesHtml = '';
         let issueCount = 1;
@@ -610,7 +662,7 @@ function renderMultiRecon(res) {
         if (d.dmarc.subdomain_vulnerable) {
             issuesHtml += `<tr><td>${issueCount++}</td><td>Insecure DMARC sub-domain 'sp' qualifier</td><td>The DMARC policy 'sp' qualifier for sub-domains is set to "none" or undefined. If the DMARC policy is neither "reject" nor "quarantine", spoofed emails from sub-domains are likely to be accepted.</td><td>High</td></tr>`;
         }
-        
+
         const issuesTable = issuesHtml ? `
             <div style="margin-top: 16px; overflow-x: auto; padding-bottom: 8px;">
                 <table class="data-table" style="min-width: 600px;">
@@ -632,13 +684,13 @@ function renderMultiRecon(res) {
             <div class="accordion-content" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; background: var(--bg);">
                 <div style="padding: 16px;">
                     <div style="font-size: 12px; color: var(--soft); margin-bottom: 8px; word-break: break-all;">
-                        <span style="color: var(--muted); font-weight: bold;">SPF Record:</span> ${d.spf.record||'Not found'}
+                        <span style="color: var(--muted); font-weight: bold;">SPF Record:</span> ${d.spf.record || 'Not found'}
                     </div>
                     <div style="font-size: 12px; color: var(--soft); margin-bottom: 16px; word-break: break-all;">
-                        <span style="color: var(--muted); font-weight: bold;">DMARC Record:</span> ${d.dmarc.record||'Not found'}
+                        <span style="color: var(--muted); font-weight: bold;">DMARC Record:</span> ${d.dmarc.record || 'Not found'}
                     </div>
                     ${issuesTable}
-                    ${d.recommendations.length ? '<div style="margin-top:16px;font-size:12px;color:var(--soft);"><strong>Recommendations:</strong><ul style="margin:8px 0 0 16px;">'+d.recommendations.map(r=>'<li style="margin-bottom:4px;">'+r+'</li>').join('')+'</ul></div>' : ''}
+                    ${d.recommendations.length ? '<div style="margin-top:16px;font-size:12px;color:var(--soft);"><strong>Recommendations:</strong><ul style="margin:8px 0 0 16px;">' + d.recommendations.map(r => '<li style="margin-bottom:4px;">' + r + '</li>').join('') + '</ul></div>' : ''}
                 </div>
             </div>
         </div>`;
@@ -655,7 +707,7 @@ function renderMultiRecon(res) {
                 ${accordionHtml}
             </div>
         </div></div>`;
-        
+
     // Re-bind accordion logic just for these new items
     ad.querySelectorAll('.accordion-trigger').forEach(trigger => {
         trigger.addEventListener('click', () => {
@@ -663,19 +715,19 @@ function renderMultiRecon(res) {
             const content = item.querySelector('.accordion-content');
             const icon = item.querySelector('.fa-chevron-down');
             const isOpen = item.classList.contains('open');
-            
+
             // Close all others in this specific module
             ad.querySelectorAll('.accordion-item').forEach(otherItem => {
                 otherItem.classList.remove('open');
                 otherItem.querySelector('.accordion-content').style.maxHeight = null;
                 const otherIcon = otherItem.querySelector('.fa-chevron-down');
-                if(otherIcon) otherIcon.style.transform = 'rotate(0deg)';
+                if (otherIcon) otherIcon.style.transform = 'rotate(0deg)';
             });
-            
+
             if (!isOpen) {
                 item.classList.add('open');
                 content.style.maxHeight = content.scrollHeight + "px";
-                if(icon) icon.style.transform = 'rotate(180deg)';
+                if (icon) icon.style.transform = 'rotate(180deg)';
             }
         });
     });
@@ -685,8 +737,8 @@ function renderDKIM(a) {
     const ad = document.getElementById('dkimAnalysis');
     ad.innerHTML = `<div class="module"><div class="module-head">DKIM: ${a.domain} — ${a.selectors_found.length} found</div>
         <div class="module-body">
-            ${a.selectors_found.length ? '<table class="data-table"><thead><tr><th>Selector</th><th>Valid</th></tr></thead><tbody>'+
-            a.selectors_found.map(s=>`<tr><td>${s.selector}</td><td><span class="badge ${s.valid?'badge-ok':'badge-fail'}">${s.valid?'PASS':'FAIL'}</span></td></tr>`).join('')+
+            ${a.selectors_found.length ? '<table class="data-table"><thead><tr><th>Selector</th><th>Valid</th></tr></thead><tbody>' +
+            a.selectors_found.map(s => `<tr><td>${s.selector}</td><td><span class="badge ${s.valid ? 'badge-ok' : 'badge-fail'}">${s.valid ? 'PASS' : 'FAIL'}</span></td></tr>`).join('') +
             '</tbody></table>' : '<div class="badge badge-warn">No selectors found</div>'}
             <div style="margin-top:12px;font-size:11px;color:var(--muted);">${a.summary}</div>
         </div></div>`;
@@ -699,13 +751,13 @@ function renderHeaders(a) {
         <span>Header Analysis</span><span class="badge ${sc}">Score: ${a.security_score}</span></div>
         <div class="module-body">
             <div class="field-row-3 mb-16" style="text-align:center;">
-                <div><span class="badge ${a.spf_result==='pass'?'badge-ok':'badge-fail'}">${a.spf_result||'N/A'}</span><div style="font-size:10px;color:var(--muted);margin-top:4px;">SPF</div></div>
-                <div><span class="badge ${a.dkim_result==='pass'?'badge-ok':'badge-fail'}">${a.dkim_result||'N/A'}</span><div style="font-size:10px;color:var(--muted);margin-top:4px;">DKIM</div></div>
-                <div><span class="badge ${a.dmarc_result==='pass'?'badge-ok':'badge-fail'}">${a.dmarc_result||'N/A'}</span><div style="font-size:10px;color:var(--muted);margin-top:4px;">DMARC</div></div>
+                <div><span class="badge ${a.spf_result === 'pass' ? 'badge-ok' : 'badge-fail'}">${a.spf_result || 'N/A'}</span><div style="font-size:10px;color:var(--muted);margin-top:4px;">SPF</div></div>
+                <div><span class="badge ${a.dkim_result === 'pass' ? 'badge-ok' : 'badge-fail'}">${a.dkim_result || 'N/A'}</span><div style="font-size:10px;color:var(--muted);margin-top:4px;">DKIM</div></div>
+                <div><span class="badge ${a.dmarc_result === 'pass' ? 'badge-ok' : 'badge-fail'}">${a.dmarc_result || 'N/A'}</span><div style="font-size:10px;color:var(--muted);margin-top:4px;">DMARC</div></div>
             </div>
             <div style="font-size:12px;color:var(--soft);margin-bottom:12px;">${a.summary}</div>
-            ${a.suspicious_indicators.length?'<div class="alert-bar warn" style="font-size:12px;"><i class="fas fa-exclamation-triangle"></i> '+a.suspicious_indicators.join(', ')+'</div>':''}
-            ${a.received_chain.length?'<details style="margin-top:12px;"><summary style="font-size:11px;color:var(--muted);cursor:pointer;">Routing chain ('+a.received_chain.length+' hops)</summary><div style="font-size:10px;color:var(--muted);padding:8px;background:var(--bg);border-radius:4px;margin-top:8px;max-height:200px;overflow:auto;">'+a.received_chain.map(c=>'<div style="margin-bottom:4px;">&gt; '+c+'</div>').join('')+'</div></details>':''}
+            ${a.suspicious_indicators.length ? '<div class="alert-bar warn" style="font-size:12px;"><i class="fas fa-exclamation-triangle"></i> ' + a.suspicious_indicators.join(', ') + '</div>' : ''}
+            ${a.received_chain.length ? '<details style="margin-top:12px;"><summary style="font-size:11px;color:var(--muted);cursor:pointer;">Routing chain (' + a.received_chain.length + ' hops)</summary><div style="font-size:10px;color:var(--muted);padding:8px;background:var(--bg);border-radius:4px;margin-top:8px;max-height:200px;overflow:auto;">' + a.received_chain.map(c => '<div style="margin-bottom:4px;">&gt; ' + c + '</div>').join('') + '</div></details>' : ''}
         </div></div>`;
 }
 // ── Renderers ─────────────────────────────────────────────
@@ -719,7 +771,7 @@ function renderDNSBL(res, target) {
         <span>${target}</span><span class="badge ${badge}">${statusTxt}</span></div>
         <div class="module-body">
             <table class="data-table"><thead><tr><th>DNSBL</th><th>Status</th></tr></thead><tbody>
-                ${res.map(r => `<tr><td>${r.provider}</td><td><span class="badge ${r.listed?'badge-fail':'badge-ok'}">${r.listed?'LISTED':'OK'}</span></td></tr>`).join('')}
+                ${res.map(r => `<tr><td>${r.provider}</td><td><span class="badge ${r.listed ? 'badge-fail' : 'badge-ok'}">${r.listed ? 'LISTED' : 'OK'}</span></td></tr>`).join('')}
             </tbody></table>
         </div></div>`;
 }
@@ -727,11 +779,11 @@ function renderDNSBL(res, target) {
 function renderSubdomains(data, target) {
     const ad = document.getElementById('subdomainAnalysis');
     const found = data.active_subdomains || [];
-    
+
     const html = found.map(s => {
         const isProtected = s.security && s.security.protected;
         const records = s.records || {};
-        
+
         let recordHtml = '';
         if (records.A && records.A.length) {
             recordHtml += `<div class="record-pill"><b>A:</b> ${records.A.join(', ')}</div>`;
@@ -745,7 +797,7 @@ function renderSubdomains(data, target) {
         if (records.DMARC) {
             recordHtml += `<div class="record-pill"><b>DMARC:</b> ${records.DMARC}</div>`;
         }
-        
+
         return `
             <div class="subdomain-item">
                 <div class="subdomain-header">
@@ -784,7 +836,7 @@ function renderBreach(data) {
     const b = data.breaches;
     const badge = b.length > 0 ? 'badge-fail' : 'badge-ok';
     ad.innerHTML = `<div class="module"><div class="module-head" style="display:flex;justify-content:space-between;">
-        <span>${data.email}</span><span class="badge ${badge}">${data.breached ? b.length+' Breaches' : 'Clean'}</span></div>
+        <span>${data.email}</span><span class="badge ${badge}">${data.breached ? b.length + ' Breaches' : 'Clean'}</span></div>
         <div class="module-body">
              ${b.length ? `<table class="data-table"><thead><tr><th>Source</th><th>Compromised Data</th></tr></thead><tbody>
                 ${b.map(x => `<tr><td>${x.name}</td><td>${x.compromised_data.join(', ')}</td></tr>`).join('')}
@@ -809,10 +861,10 @@ function renderPhish(data) {
         <div class="module-body" style="padding:0; overflow:hidden; border-radius: 0 0 var(--radius) var(--radius);">
             <iframe id="phish_preview" style="width:100%; height:500px; border:none; background:white;"></iframe>
         </div></div>`;
-    
+
     setTimeout(() => {
         const iframe = document.getElementById('phish_preview');
-        if(iframe) iframe.srcdoc = data.template;
+        if (iframe) iframe.srcdoc = data.template;
     }, 50);
 }
 
@@ -966,13 +1018,13 @@ function initNeuralBackground(containerId, color, particleCount, speed, trailOpa
 
     const animate = (currentTime) => {
         animationFrameId = requestAnimationFrame(animate);
-        
+
         if (!currentTime) return;
         if (!lastTime) lastTime = currentTime;
-        
+
         const deltaTime = currentTime - lastTime;
         if (deltaTime < fpsInterval) return;
-        
+
         // Adjust for any small timing variances to keep steady 60fps
         lastTime = currentTime - (deltaTime % fpsInterval);
 
@@ -1000,14 +1052,67 @@ function initNeuralBackground(containerId, color, particleCount, speed, trailOpa
 function openEmailPreview() {
     const preview = document.getElementById('previewOverlay');
     const iframe = document.getElementById('modal_email_preview');
-    const content = document.getElementById('message').value;
+    
+    // Get form values
+    const fromName = document.getElementById('from_name')?.value || 'Unknown Sender';
+    const fromEmail = document.getElementById('from_email')?.value || 'sender@example.com';
+    const toEmail = document.getElementById('to_email')?.value || 'recipient@example.com';
+    const subject = document.getElementById('subject')?.value || '(No Subject)';
+    const content = document.getElementById('message')?.value || '';
     const isHtml = document.getElementById('html')?.checked;
 
+    // Populate UI
+    const sEl = document.getElementById('preview_subject'); if (sEl) sEl.textContent = subject;
+    const fnEl = document.getElementById('preview_from_name'); if (fnEl) fnEl.textContent = fromName;
+    const feEl = document.getElementById('preview_from_email'); if (feEl) feEl.textContent = `<${fromEmail}>`;
+    const toEl = document.getElementById('preview_to'); if (toEl) toEl.textContent = toEmail;
+    
+    // Avatar initals
+    const initial = fromName.trim().charAt(0).toUpperCase();
+    const avEl = document.getElementById('preview_avatar'); if (avEl) avEl.textContent = initial || '?';
+    
+    // Date
+    const now = new Date();
+    const dateStr = now.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
+    const dEl = document.getElementById('preview_date'); if (dEl) dEl.textContent = dateStr;
+
     if (preview && iframe) {
+        iframe.style.background = 'transparent'; // Remove white background
+        
         if (isHtml) {
-            iframe.srcdoc = content;
+            // Inject a dark mode style to prevent black text on dark background
+            const darkStyle = `<style>body { color: #fafafa !important; background-color: #0a0a0a !important; color-scheme: dark; }</style>`;
+            let finalHtml = content;
+            if (finalHtml.match(/<head[^>]*>/i)) {
+                finalHtml = finalHtml.replace(/(<head[^>]*>)/i, `$1${darkStyle}`);
+            } else if (finalHtml.match(/<html[^>]*>/i)) {
+                finalHtml = finalHtml.replace(/(<html[^>]*>)/i, `$1<head>${darkStyle}</head>`);
+            } else {
+                finalHtml = `${darkStyle}\n${finalHtml}`;
+            }
+            iframe.srcdoc = finalHtml;
         } else {
-            iframe.srcdoc = `<div style="font-family: sans-serif; padding: 20px; white-space: pre-wrap; font-size: 14px;">${content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>`;
+            // Plain text emails get a dark mode styling
+            iframe.srcdoc = `
+                <html>
+                <head>
+                    <style>
+                        body { 
+                            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+                            padding: 24px; 
+                            font-size: 14px; 
+                            color: #fafafa; 
+                            background-color: #0a0a0a;
+                            line-height: 1.6; 
+                            margin: 0; 
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div style="white-space: pre-wrap;">${content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+                </body>
+                </html>
+            `;
         }
         preview.classList.add('show');
     }
@@ -1024,12 +1129,12 @@ async function applyEvasion(mode) {
     const msg = document.getElementById('message');
     const html = msg.value.trim();
     if (!html) return toast('Message body is empty', 'fail');
-    
+
     showLoading('Applying evasion...');
     try {
         const r = await fetch('/bypass_html', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ html, mode })
         });
         const data = await r.json();

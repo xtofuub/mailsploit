@@ -243,8 +243,9 @@ class EmailSpoofer:
             server.login(self.username, self.password)
             
             # Send email
-            # Use custom envelope_sender if provided, otherwise fallback to login username
-            from_addr = envelope_sender or self.username
+            # Use custom envelope_sender if provided, otherwise fallback to login username (primary identity)
+            # NOTE: For advanced spoofing, envelope_sender should be a domain you control.
+            from_addr = envelope_sender if envelope_sender and envelope_sender.strip() else self.username
             envelope_sender_ascii = self._to_ascii_address(from_addr)
             envelope_recipients = self._to_ascii_list(recipient_list)
             server.sendmail(envelope_sender_ascii, envelope_recipients, msg.as_string())
@@ -871,7 +872,11 @@ def send_email():
         message = request.form.get('message', '')
         html = request.form.get('html') == 'on'
         add_xheaders = request.form.get('add_xheaders') == 'on'
+        
+        # Sender identity fallbacks
         envelope_sender = request.form.get('envelope_sender')
+        if not envelope_sender or not envelope_sender.strip():
+            envelope_sender = from_email
         # Send count (optional)
         try:
             send_count = int(request.form.get('send_count', '1'))
