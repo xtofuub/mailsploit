@@ -3,7 +3,7 @@
 Advanced Email Spoofing Web Application
 This web application demonstrates advanced email spoofing techniques for educational purposes only.
 
-Developed by Triotion (https://t.me/Triotion)
+Developed by tofuub
 """
 
 from flask import Flask, render_template, request, jsonify, flash, redirect, url_for
