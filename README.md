@@ -1,5 +1,5 @@
 <div align="center">
-  <img width="200" height="200" alt="favicon" src="https://github.com/user-attachments/assets/7e97acdc-1d9d-4d88-9400-153b3f6ed4cf" />
+  <img width="200" height="200" alt="favicon" src="https://github.com/user-attachments/assets/4718b967-ed3b-4db0-b2b5-7a0cb1a68a6b" />
 
   **Advanced infrastructure validation, security reconnaissance, and tactical payload engineering for enterprise mail systems.**
 
