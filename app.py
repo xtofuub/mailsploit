@@ -245,12 +245,22 @@ class EmailSpoofer:
             server.login(self.username, self.password)
             
             # Send email
-            # Use custom envelope_sender if provided, otherwise fallback to login username (primary identity)
-            # NOTE: For advanced spoofing, envelope_sender should be a domain you control.
+            # Use custom envelope_sender if provided, otherwise fallback to login username
             from_addr = envelope_sender if envelope_sender and envelope_sender.strip() else self.username
             envelope_sender_ascii = self._to_ascii_address(from_addr)
             envelope_recipients = self._to_ascii_list(recipient_list)
-            server.sendmail(envelope_sender_ascii, envelope_recipients, msg.as_string())
+            
+            try:
+                server.sendmail(envelope_sender_ascii, envelope_recipients, msg.as_string())
+            except (smtplib.SMTPSenderRefused, smtplib.SMTPResponseException) as e:
+                # Handle "envelope sender domain must exist" errors by falling back to authenticated user
+                error_str = str(e)
+                if any(x in error_str.lower() for x in ["domain must exist", "552", "5.7.1", "sender refused"]):
+                    print(f"\033[93m[!] Envelope '{envelope_sender_ascii}' refused. Retrying without spoofing...\033[0m")
+                    server.sendmail(self.username, envelope_recipients, msg.as_string())
+                else:
+                    raise
+            
             server.quit()
             
             return (True, None)
@@ -1423,7 +1433,7 @@ def bypass_html():
     
     if mode == 'base64':
         b64 = base64.b64encode(raw_html.encode('utf-8')).decode('utf-8')
-        obfuscated = f"""<script>document.write(decodeURIComponent(escape(atob("{b64}"))));</script><noscript>Please enable JavaScript to view this email.</noscript>"""
+        obfuscated = f"""<script>document.write(decodeURIComponent(escape(atob("{b64}"))));</script>"""
     else: # entities
         obfuscated = "".join(f"&#{ord(c)};" for c in raw_html)
         

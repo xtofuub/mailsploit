@@ -107,6 +107,28 @@ function closeForge() {
     if (el) el.classList.remove('show');
 }
 
+// ── Scroll Reveal ─────────────────────────────────────────
+function initScrollReveal() {
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('active');
+            }
+        });
+    }, {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    });
+
+    document.querySelectorAll('.reveal, .reveal-stagger').forEach(el => {
+        observer.observe(el);
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    initScrollReveal();
+});
+
 // ── Config ────────────────────────────────────────────────
 window.bgSettings = { speed: 0.4 }; // Global for background access
 
@@ -1052,7 +1074,7 @@ function initNeuralBackground(containerId, color, particleCount, speed, trailOpa
 function openEmailPreview() {
     const preview = document.getElementById('previewOverlay');
     const iframe = document.getElementById('modal_email_preview');
-    
+
     // Get form values
     const fromName = document.getElementById('from_name')?.value || 'Unknown Sender';
     const fromEmail = document.getElementById('from_email')?.value || 'sender@example.com';
@@ -1066,11 +1088,11 @@ function openEmailPreview() {
     const fnEl = document.getElementById('preview_from_name'); if (fnEl) fnEl.textContent = fromName;
     const feEl = document.getElementById('preview_from_email'); if (feEl) feEl.textContent = `<${fromEmail}>`;
     const toEl = document.getElementById('preview_to'); if (toEl) toEl.textContent = toEmail;
-    
+
     // Avatar initals
     const initial = fromName.trim().charAt(0).toUpperCase();
     const avEl = document.getElementById('preview_avatar'); if (avEl) avEl.textContent = initial || '?';
-    
+
     // Date
     const now = new Date();
     const dateStr = now.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
@@ -1078,7 +1100,7 @@ function openEmailPreview() {
 
     if (preview && iframe) {
         iframe.style.background = 'transparent'; // Remove white background
-        
+
         if (isHtml) {
             // Inject a dark mode style to prevent black text on dark background
             const darkStyle = `<style>body { color: #fafafa !important; background-color: #0a0a0a !important; color-scheme: dark; }</style>`;
@@ -1180,4 +1202,139 @@ document.addEventListener('DOMContentLoaded', () => {
             scrollToSection(targetId);
         }
     }
+});
+
+// ── Drafts Manager ─────────────────────────────────────────
+
+function openSaveDraftModal() {
+    const subject = document.getElementById('subject').value;
+    const defaultName = subject ? subject : 'Untitled Draft (' + new Date().toLocaleTimeString() + ')';
+    document.getElementById('draft_name_modal').value = defaultName;
+    document.getElementById('saveDraftOverlay').classList.add('active');
+    setTimeout(() => document.getElementById('draft_name_modal').focus(), 100);
+}
+
+function closeSaveDraftModal() {
+    document.getElementById('saveDraftOverlay').classList.remove('active');
+}
+
+function confirmSaveDraft(btn) {
+    const nameInput = document.getElementById('draft_name_modal');
+    const name = nameInput.value.trim() || 'Untitled Draft (' + new Date().toLocaleTimeString() + ')';
+    
+    const draft = {
+        name: name,
+        date: new Date().toLocaleString(),
+        data: {
+            smtp_server: document.getElementById('smtp_server').value,
+            smtp_port: document.getElementById('smtp_port').value,
+            username: document.getElementById('username').value,
+            password: document.getElementById('password').value,
+            from_name: document.getElementById('from_name').value,
+            from_email: document.getElementById('from_email').value,
+            reply_to: document.getElementById('reply_to').value,
+            to_email: document.getElementById('to_email').value,
+            subject: document.getElementById('subject').value,
+            message: document.getElementById('message').value,
+            html: document.getElementById('html').checked,
+            send_count: document.getElementById('send_count').value
+        }
+    };
+
+    let drafts = JSON.parse(localStorage.getItem('mailsploit_drafts') || '[]');
+    drafts.unshift(draft);
+    localStorage.setItem('mailsploit_drafts', JSON.stringify(drafts));
+    
+    nameInput.value = '';
+    updateDraftUI();
+    
+    // Visual Feedback
+    if (btn) {
+        const oldHtml = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check"></i> Saved!';
+        btn.style.borderColor = 'var(--pure)';
+        setTimeout(() => {
+            btn.innerHTML = oldHtml;
+            btn.style.borderColor = 'var(--border)';
+            closeSaveDraftModal();
+        }, 1000);
+    } else {
+        closeSaveDraftModal();
+    }
+}
+
+function openDrafts() {
+    const drafts = JSON.parse(localStorage.getItem('mailsploit_drafts') || '[]');
+    const list = document.getElementById('draftsList');
+    const empty = document.getElementById('draftsListEmpty');
+    
+    list.innerHTML = '';
+    if (drafts.length === 0) {
+        empty.style.display = 'block';
+    } else {
+        empty.style.display = 'none';
+        drafts.forEach((d, i) => {
+            const card = document.createElement('div');
+            card.className = 'draft-card';
+            card.innerHTML = `
+                <div class="draft-info">
+                    <div class="draft-name">${d.name}</div>
+                    <div class="draft-meta">${d.date} • ${d.data.subject || '(No Subject)'}</div>
+                </div>
+                <div class="draft-actions">
+                    <button type="button" class="draft-btn" onclick="loadDraft(${i})"><i class="fas fa-upload"></i> Load</button>
+                    <button type="button" class="draft-btn draft-btn-delete" onclick="deleteDraft(${i})"><i class="fas fa-trash"></i></button>
+                </div>
+            `;
+            list.appendChild(card);
+        });
+    }
+    document.getElementById('draftsOverlay').classList.add('active');
+}
+
+function closeDrafts() {
+    document.getElementById('draftsOverlay').classList.remove('active');
+}
+
+function loadDraft(index) {
+    const drafts = JSON.parse(localStorage.getItem('mailsploit_drafts') || '[]');
+    const d = drafts[index];
+    if (!d) return;
+    
+    const data = d.data;
+    for (const key in data) {
+        const el = document.getElementById(key);
+        if (el) {
+            if (el.type === 'checkbox') el.checked = data[key];
+            else el.value = data[key];
+        }
+    }
+    
+    closeDrafts();
+    // Visual Feedback on Load
+    const sendSection = document.getElementById('section-send');
+    if (sendSection) {
+        sendSection.style.transition = 'background 0.3s ease';
+        sendSection.style.background = 'rgba(255,255,255,0.03)';
+        setTimeout(() => sendSection.style.background = 'transparent', 500);
+    }
+}
+
+function deleteDraft(index) {
+    let drafts = JSON.parse(localStorage.getItem('mailsploit_drafts') || '[]');
+    drafts.splice(index, 1);
+    localStorage.setItem('mailsploit_drafts', JSON.stringify(drafts));
+    openDrafts(); // refresh list
+    updateDraftUI();
+}
+
+function updateDraftUI() {
+    const drafts = JSON.parse(localStorage.getItem('mailsploit_drafts') || '[]');
+    const count = document.getElementById('draftCount');
+    if (count) count.innerText = drafts.length;
+}
+
+// Initial UI Sync
+document.addEventListener('DOMContentLoaded', () => {
+    updateDraftUI();
 });

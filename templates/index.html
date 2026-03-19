@@ -4,7 +4,7 @@
 
 <!-- ═══ HOME: Hero + Features ═══ -->
 <section class="tool-section active" id="section-home">
-    <div class="hero">
+    <div class="hero reveal">
         <div class="hero-badge">
             <i class="fas fa-magic"></i> ADVANCED TESTING ENVIRONMENT
         </div>
@@ -19,7 +19,7 @@
     </div>
 
     <!-- Metrics Section -->
-    <div class="metrics-section">
+    <div class="metrics-section reveal-stagger">
         <p class="metrics-desc">
             Our powerful intelligence tools and automated recon engines give you <br>
             unprecedented visibility into complex email routing architectures.
@@ -42,7 +42,7 @@
     </div>
 
     <!-- About Section -->
-    <div id="about-us" class="about-section">
+    <div id="about-us" class="about-section reveal">
         <div class="about-badge">
             <i class="fas fa-users"></i> WHO WE ARE
         </div>
@@ -58,7 +58,7 @@
     <!-- Features Tab Transition -->
     <div class="features-divider"></div>
 
-    <div id="features-tab" class="features-section">
+    <div id="features-tab" class="features-section reveal">
         <div class="features-heading" style="text-align: center; margin-bottom: 48px;">
             <div class="features-badge"><i class="fas fa-bolt"></i> CORE MODULES</div>
             <h2 class="features-title">Product Features</h2>
@@ -67,7 +67,7 @@
         </div>
 
         <!-- ═══ Bento Grid ═══ -->
-        <div class="bento-grid" id="bentoGrid">
+        <div class="bento-grid reveal-stagger" id="bentoGrid">
 
             <!-- Slot 1: Tall Left Card (spans 3 rows) -->
             <div class="bento-card bento-tall" onclick="switchSection('domain')">
@@ -166,7 +166,7 @@
         </div>
 
         <!-- ═══ All Tools Carousel ═══ -->
-        <div style="margin-top: 48px;">
+        <div style="margin-top: 48px;" class="reveal">
             <div class="features-badge" style="display: block; text-align: center; margin-bottom: 24px;"><i
                     class="fas fa-th"></i> ALL TOOLS</div>
             <div class="carousel-wrapper">
@@ -239,7 +239,7 @@
     <!-- ═══ FAQ SECTION ═══ -->
     <div class="features-divider" style="margin-top: 60px;"></div>
 
-    <div id="faq-section" class="faq-section">
+    <div id="faq-section" class="faq-section reveal">
         <div class="features-heading" style="text-align: center; margin-bottom: 40px; margin-top: 60px;">
             <div class="features-badge"><i class="fas fa-question-circle"></i> FAQ</div>
             <h2 class="features-title">Frequently Asked Questions</h2>
@@ -328,24 +328,26 @@
 
 <!-- ═══ SEND EMAIL ═══ -->
 <section class="tool-section" id="section-send">
-    <div class="tool-header">
-        <h2>Send Email</h2>
-        <p>Compose and transmit test emails via SMTP</p>
+    <div class="tool-header" style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+            <h2>Send Email</h2>
+            <p>Compose and transmit test emails via SMTP</p>
+        </div>
     </div>
     <form id="emailForm" enctype="multipart/form-data">
         <div class="field-row-3">
             <div class="module">
                 <div class="module-head"><i class="fas fa-server"></i> SMTP Config</div>
                 <div class="module-body">
-                    <div class="field"><label>Server</label><input type="text" id="smtp_server" name="smtp_server"
-                            placeholder="smtp.relay.com" required></div>
-                    <div class="field-row">
-                        <div class="field"><label>Port</label><input type="number" id="smtp_port" name="smtp_port"
+                    <div class="mix-row">
+                        <div class="field"><label><i class="fas fa-server"></i> Server</label><input type="text" id="smtp_server" name="smtp_server"
+                                placeholder="smtp.relay.com" required></div>
+                        <div class="field"><label><i class="fas fa-plug"></i> Port</label><input type="number" id="smtp_port" name="smtp_port"
                                 value="25" required></div>
-                        <div class="field"><label>Username</label><input type="text" id="username" name="username"
-                                required></div>
                     </div>
-                    <div class="field"><label>Password</label><input type="password" id="password" name="password"
+                    <div class="field"><label><i class="fas fa-user-circle"></i> Username</label><input type="text" id="username" name="username"
+                            required></div>
+                    <div class="field"><label><i class="fas fa-key"></i> Password</label><input type="password" id="password" name="password"
                             required></div>
                 </div>
             </div>
@@ -424,13 +426,20 @@
                 </div>
             </div>
         </div>
-        <div class="text-right mt-16" style="display:flex; justify-content:flex-end; gap:12px; align-items:center;">
-            <button type="button" class="btn btn-ghost" onclick="openForge()"
-                style="border: 1px solid var(--border);"><i class="fas fa-hammer"></i> Forge Template</button>
-            <div style="width:1px; height:24px; background:var(--border); margin:0 4px;"></div>
-            <button type="button" class="btn btn-ghost" onclick="openEmailPreview()"><i class="fas fa-eye"></i>
-                Preview</button>
-            <button type="submit" class="btn btn-white btn-lg"><i class="fas fa-paper-plane"></i> Send</button>
+        <div class="mt-16" style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+                <button type="button" class="btn btn-ghost" onclick="openDrafts()"><i class="fas fa-folder-open"></i> Manage Drafts <span id="draftCount" class="badge badge-mute" style="margin-left:4px;">0</span></button>
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:12px; align-items:center;">
+                <button type="button" class="btn btn-ghost" onclick="openSaveDraftModal()"><i class="fas fa-save"></i> Save Draft</button>
+                <div style="width:1px; height:24px; background:var(--border); margin:0 4px;"></div>
+                <button type="button" class="btn btn-ghost" onclick="openForge()"
+                    style="border: 1px solid var(--border);"><i class="fas fa-hammer"></i> Forge Template</button>
+                <div style="width:1px; height:24px; background:var(--border); margin:0 4px;"></div>
+                <button type="button" class="btn btn-ghost" onclick="openEmailPreview()"><i class="fas fa-eye"></i>
+                    Preview</button>
+                <button type="submit" class="btn btn-white btn-lg"><i class="fas fa-paper-plane"></i> Send</button>
+            </div>
         </div>
     </form>
 </section>
@@ -446,16 +455,16 @@
             <div class="module-head"><i class="fas fa-vial"></i> Connection Test</div>
             <div class="module-body">
                 <form id="testForm">
-                    <div class="field"><label>Server</label><input type="text" class="input" id="test_smtp_server"
-                            name="smtp_server" required></div>
-                    <div class="field-row">
-                        <div class="field"><label>Port</label><input type="number" class="input" id="test_smtp_port"
+                    <div class="mix-row">
+                        <div class="field"><label><i class="fas fa-server"></i> Server</label><input type="text" class="input" id="test_smtp_server"
+                                name="smtp_server" required></div>
+                        <div class="field"><label><i class="fas fa-plug"></i> Port</label><input type="number" class="input" id="test_smtp_port"
                                 name="smtp_port" value="25" required></div>
-                        <div class="field"><label>Username</label><input type="text" class="input" id="test_username"
-                                name="username" required></div>
                     </div>
-                    <div class="field"><label>Password</label><input type="password" class="input" id="test_password"
-                            name="password" required></div>
+                    <div class="field"><label><i class="fas fa-user-circle"></i> Username</label><input type="text" class="input" id="test_smtp_user"
+                            name="smtp_user" required></div>
+                    <div class="field"><label><i class="fas fa-key"></i> Password</label><input type="password" class="input" id="test_smtp_pass"
+                            name="smtp_pass" required></div>
                     <button type="submit" class="btn btn-white btn-full">Verify Connection</button>
                 </form>
             </div>
@@ -676,7 +685,8 @@
                 <div class="module-body">
                     <ul style="margin:0; padding-left:20px; color:var(--soft); font-size:13px; line-height:1.6;">
                         <li><strong>Authentication-Results:</strong> Must show <code>spf=pass</code>,
-                            <code>dkim=pass</code>, <code>dmarc=pass</code>.</li>
+                            <code>dkim=pass</code>, <code>dmarc=pass</code>.
+                        </li>
                         <li><strong>Received:</strong> Trace hops from bottom to top. Look for internal IPs exposed to
                             the internet or logical gaps.</li>
                         <li><strong>Message-ID:</strong> Verify it matches the sending domain's expected format.</li>
@@ -1070,5 +1080,54 @@
         </div>
     </div>
 </section>
+
+<!-- ═══ DRAFTS MODAL ═══ -->
+<div id="draftsOverlay" class="overlay">
+    <div class="modal">
+        <div class="modal-head">
+            <div style="flex: 1;">
+                <div class="modal-title">Campaign Drafts</div>
+                <div class="modal-desc">Search, load, and manage your saved email configurations.</div>
+            </div>
+            <button class="modal-close" onclick="closeDrafts()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div style="position:relative; margin-bottom:20px;">
+                <i class="fas fa-search" style="position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--muted); font-size:14px;"></i>
+                <input type="text" id="draftSearch" placeholder="Search by name or subject..." 
+                    style="width:100%; padding:12px 12px 12px 42px; background:var(--bg); border:1px solid var(--border); border-radius:var(--radius); color:var(--white); font-size:14px; transition:border-color 0.2s;"
+                    oninput="filterDrafts()">
+            </div>
+            
+            <div id="draftsListEmpty" style="text-align:center; padding:60px 20px; color:var(--muted);">
+                <i class="fas fa-folder-open" style="font-size:32px; margin-bottom:16px; opacity:0.3;"></i>
+                <p>No saved drafts yet.</p>
+            </div>
+            <div id="draftsList" class="drafts-grid">
+                <!-- Drafts populated via JS -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ SAVE DRAFT MODAL ═══ -->
+<div id="saveDraftOverlay" class="overlay">
+    <div class="modal" style="max-width:400px;">
+        <div class="modal-head">
+            <div class="modal-title">Save as Draft</div>
+            <div class="modal-desc">Give your current campaign a name for easy loading later.</div>
+            <button class="modal-close" onclick="closeSaveDraftModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="field">
+                <label>Draft Name</label>
+                <input type="text" id="draft_name_modal" placeholder="e.g. Q3 Phishing Campaign">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-white btn-full" onclick="confirmSaveDraft(this)">Save Campaign</button>
+        </div>
+    </div>
+</div>
 
 {% endblock %}

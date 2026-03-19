@@ -38,7 +38,41 @@ body {
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
+  overflow-x: hidden;
 }
+
+/* ═══ Scroll Reveal ══════════════════════════════════════════ */
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+  pointer-events: none;
+}
+
+.reveal.active {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* Staggered Delays for Grid Children */
+.reveal-stagger > * {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.reveal-stagger.active > * {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.reveal-stagger.active > *:nth-child(1) { transition-delay: 0.1s; }
+.reveal-stagger.active > *:nth-child(2) { transition-delay: 0.2s; }
+.reveal-stagger.active > *:nth-child(3) { transition-delay: 0.3s; }
+.reveal-stagger.active > *:nth-child(4) { transition-delay: 0.4s; }
+.reveal-stagger.active > *:nth-child(5) { transition-delay: 0.5s; }
+.reveal-stagger.active > *:nth-child(6) { transition-delay: 0.6s; }
 
 a { color: var(--white); text-decoration: none; }
 a:hover { color: var(--pure); }
@@ -1012,6 +1046,12 @@ a:hover { color: var(--pure); }
   gap: 16px;
 }
 
+.mix-row {
+  display: grid;
+  grid-template-columns: 1fr 100px;
+  gap: 16px;
+}
+
 .field-row-3 {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
@@ -1622,6 +1662,172 @@ a:hover { color: var(--pure); }
   .navbar { padding: 6px; gap: 2px; }
   .nav-brand { display: none; }
   .nav-menu-item { padding: 8px 12px; font-size: 12px; }
+}
+/* ═══ Modals ═══════════════════════════════════════════════════ */
+.overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal {
+  background: var(--surface); /* Solid Surface */
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  width: 90%;
+  max-width: 550px;
+  max-height: 85vh;
+  overflow: hidden;
+  transform: translateY(10px);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 40px 100px -20px rgba(0,0,0,0.8);
+  display: flex;
+  flex-direction: column;
+}
+
+.overlay.active .modal {
+  transform: translateY(0);
+}
+
+.modal-head {
+  padding: 24px 32px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--surface);
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--white);
+  line-height: 1.2;
+  margin-bottom: 4px;
+}
+
+.modal-desc {
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.modal-close {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 24px;
+  cursor: pointer;
+  line-height: 1;
+  transition: color 0.2s ease;
+}
+
+.modal-close:hover {
+  color: var(--white);
+}
+
+.modal-body {
+  padding: 32px;
+}
+
+/* ═══ Drafts Manager ══════════════════════════════════════════ */
+.drafts-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.draft-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.2s ease;
+}
+
+.draft-card:hover {
+  border-color: var(--subtle);
+  background: var(--elevated);
+}
+
+.draft-info {
+  flex: 1;
+  min-width: 0;
+  margin-right: 16px;
+}
+
+.draft-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 2px;
+}
+
+.draft-meta {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.draft-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.draft-btn {
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--soft);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.draft-btn:hover {
+  background: var(--white);
+  color: var(--black);
+  border-color: var(--white);
+}
+
+.draft-btn-delete {
+  color: #ef4444;
+}
+
+.draft-btn-delete:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: #ef4444;
+}
+
+.badge {
+  background: var(--border-l);
+  color: var(--white);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  margin-left: 6px;
 }
 
 @media (max-width: 480px) {
