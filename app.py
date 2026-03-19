@@ -8,6 +8,8 @@ Developed by Triotion (https://t.me/Triotion)
 
 from flask import Flask, render_template, request, jsonify, flash, redirect, url_for
 import smtplib
+import sys
+import subprocess
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
@@ -1597,5 +1599,35 @@ def audit_dnsbl():
         "results": bl_results
     })
 
+def update_self():
+    ascii_art = r"""
+ ___  ___  ________  ___  ___       ________  ________  ___       ________  ___  _________   
+|\  \|\  \|\   __  \|\  \|\  \     |\   ____\|\   __  \|\  \     |\   __  \|\  \|\___   ___\ 
+\ \  \\\  \ \  \|\  \ \  \\\  \    \ \  \___|\ \  \|\  \ \  \    \ \  \|\  \ \  \|___ \  \_| 
+ \ \  \\\  \ \   ____\ \  \\\  \    \ \_____  \ \   ____\ \  \    \ \  \\\  \ \  \   \ \  \  
+  \ \  \\\  \ \  \___|\ \  \\\  \    \|____|\  \ \  \___|\ \  \____\ \  \\\  \ \  \   \ \  \ 
+   \ \_______\ \__\    \ \_______\     ____\_\  \ \__\    \ \_______\ \_______\ \__\   \ \__\
+    \|_______|\|__|     \|_______|    |\_________\|__|     \|_______|\|_______|\|__|    \|__|
+                                      \|_________|                                           
+    """
+    print(ascii_art)
+    print("\033[93m[!] Checking for updates from GitHub...\033[0m")
+    try:
+        # Check if it's a git repo
+        subprocess.run(["git", "rev-parse", "--is-inside-work-tree"], check=True, capture_output=True)
+        print("\033[94m[*] Pulling latest changes from origin main...\033[0m")
+        result = subprocess.run(["git", "pull"], check=True, capture_output=True, text=True)
+        print(result.stdout)
+        print("\033[92m[+] Update complete! Please restart the application.\033[0m")
+        sys.exit(0)
+    except subprocess.CalledProcessError as e:
+        print(f"\033[91m[x] Error during update: {e.stderr if hasattr(e, 'stderr') else e}\033[0m")
+        sys.exit(1)
+    except FileNotFoundError:
+        print("\033[91m[x] Git not found. Please install git to use the update feature.\033[0m")
+        sys.exit(1)
+
 if __name__ == '__main__':
+    if len(sys.argv) > 1 and sys.argv[1] == '-update':
+        update_self()
     app.run(debug=True, host='0.0.0.0', port=5000)

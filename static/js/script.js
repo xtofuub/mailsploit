@@ -108,7 +108,7 @@ function closeForge() {
 }
 
 // ── Config ────────────────────────────────────────────────
-window.bgSettings = { speed: 0.8 }; // Global for background access
+window.bgSettings = { speed: 0.4 }; // Global for background access
 
 function openConfig() {
     // Sync UI with current settings
@@ -155,7 +155,7 @@ function resetConfig() {
     localStorage.removeItem('ms_config');
     // Restore defaults
     document.documentElement.style.removeProperty('--accent-glow-primary');
-    window.bgSettings.speed = 0.8;
+    window.bgSettings.speed = 0.4;
 
     // Update inputs if they exist
     const accent = document.getElementById('cfgAccent');
@@ -165,8 +165,8 @@ function resetConfig() {
     }
     const speed = document.getElementById('cfgSpeed');
     if (speed) {
-        speed.value = 0.8;
-        document.getElementById('speedVal').textContent = '0.8x';
+        speed.value = 0.4;
+        document.getElementById('speedVal').textContent = '0.4x';
     }
 
     toast('Defaults restored', 'ok');
@@ -298,7 +298,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Neural Background Init
-    initNeuralBackground('bg-container', '#a3a3a3', 400, 0.8, 0.15);
+    initNeuralBackground('bg-container', '#a3a3a3', 400, 0.4, 0.15);
 
     // Initial Config & Creds Load
     loadConfig();
