@@ -1128,10 +1128,10 @@ a:hover { color: var(--pure); }
   font-family: var(--mono);
 }
 
-.badge-ok   { background: rgba(255,255,255,0.1); color: #4ade80; }
-.badge-warn { background: rgba(255,255,255,0.1); color: #fbbf24; }
-.badge-fail { background: rgba(255,255,255,0.1); color: #f87171; }
-.badge-mute { background: rgba(255,255,255,0.06); color: var(--muted); }
+.badge.badge-ok   { background: rgba(255,255,255,0.1); color: #4ade80; }
+.badge.badge-warn { background: rgba(255,255,255,0.1); color: #fbbf24; }
+.badge.badge-fail { background: rgba(255,255,255,0.1); color: #f87171; }
+.badge.badge-mute { background: rgba(255,255,255,0.06); color: var(--muted); }
 
 /* ═══ Tables ═════════════════════════════════════════════════ */
 .data-table {
@@ -1820,15 +1820,7 @@ a:hover { color: var(--pure); }
   border-color: #ef4444;
 }
 
-.badge {
-  background: var(--border-l);
-  color: var(--white);
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 10px;
-  font-weight: 700;
-  margin-left: 6px;
-}
+
 
 @media (max-width: 480px) {
   .tools-mini-grid { grid-template-columns: repeat(3, 1fr); }

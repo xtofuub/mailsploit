@@ -292,6 +292,32 @@ class EmailSpoofer:
         except Exception as e:
             return (False, str(e))
 
+    def validate_sending(self, test_recipient):
+        """
+        Validate if the SMTP server can actually send an email by sending a test message
+        
+        Args:
+            test_recipient (str): Email address to send the test message to
+            
+        Returns:
+            tuple: (success, error_message)
+        """
+        if not test_recipient:
+            return self.test_connection()
+            
+        try:
+            msg = self.create_message(
+                from_name="Mailsploit Validator",
+                from_email=self.username,
+                to_email=test_recipient,
+                subject="SMTP Validation Test",
+                message="This is an automated test to validate SMTP sending capabilities for Mailsploit.",
+                html=False
+            )
+            return self.send_email(msg, test_recipient)
+        except Exception as e:
+            return (False, str(e))
+
 def allowed_file(filename):
     """Check if file extension is allowed"""
     return '.' in filename and \
@@ -377,6 +403,17 @@ def test_smtp_server(server_info, validate_send=False, test_recipient=None):
     except Exception as e:
         return (server_info, False, str(e))
 
+# Common public DNS resolvers for reliable fallback
+PUBLIC_DNS_RESOLVERS = ['8.8.8.8', '1.1.1.1', '8.8.4.4', '1.0.0.1']
+
+def get_dns_resolver():
+    """Create a DNS resolver with public fallbacks"""
+    r = dns.resolver.Resolver()
+    r.nameservers = PUBLIC_DNS_RESOLVERS
+    r.timeout = 5
+    r.lifetime = 10
+    return r
+
 def check_domain_spoofing(domain):
     """
     Check if a domain is vulnerable to email spoofing by analyzing SPF and DMARC records
@@ -403,23 +440,29 @@ def check_domain_spoofing(domain):
         'recommendations': []
     }
     
+    resolver = get_dns_resolver()
+    
     try:
         # Check SPF record
         try:
-            spf_records = dns.resolver.resolve(domain, 'TXT')
+            spf_records = resolver.resolve(domain, 'TXT')
             for record in spf_records:
                 record_text = str(record).strip('"')
                 if record_text.startswith('v=spf1'):
                     analysis['spf']['status'] = 'present'
                     analysis['spf']['record'] = record_text
-                    analysis['spf']['vulnerable'] = False
+                    # Check for strict/moderate qualifiers
+                    if '-all' in record_text or '~all' in record_text:
+                        analysis['spf']['vulnerable'] = False
                     break
-        except dns.exception.DNSException:
+        except (dns.resolver.NoAnswer, dns.resolver.NXDOMAIN, dns.exception.Timeout):
+            pass
+        except Exception:
             pass
         
         # Check DMARC record
         try:
-            dmarc_records = dns.resolver.resolve(f'_dmarc.{domain}', 'TXT')
+            dmarc_records = resolver.resolve(f'_dmarc.{domain}', 'TXT')
             for record in dmarc_records:
                 record_text = str(record).strip('"')
                 if record_text.startswith('v=DMARC1'):
@@ -456,9 +499,11 @@ def check_domain_spoofing(domain):
                     else:
                         # Inherit primary policy
                         analysis['dmarc']['subdomain_policy'] = analysis['dmarc']['policy']
-                        analysis['dmarc']['subdomain_vulnerable'] = analysis['dmarc']['policy'] in (None, 'unknown', 'none')
+                        analysis['dmarc']['subdomain_vulnerable'] = analysis['dmarc']['vulnerable']
                     break
-        except dns.exception.DNSException:
+        except (dns.resolver.NoAnswer, dns.resolver.NXDOMAIN, dns.exception.Timeout):
+            pass
+        except Exception:
             pass
         
         # Determine overall status
@@ -533,11 +578,12 @@ def check_dkim_records(domain, selectors=None):
         'recommendations': []
     }
     
+    resolver = get_dns_resolver()
     try:
         for selector in selectors:
             dkim_domain = f"{selector}._domainkey.{domain}"
             try:
-                dkim_records = dns.resolver.resolve(dkim_domain, 'TXT')
+                dkim_records = resolver.resolve(dkim_domain, 'TXT')
                 for record in dkim_records:
                     record_text = str(record).strip('"')
                     if 'k=' in record_text or 'p=' in record_text:
