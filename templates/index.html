@@ -343,15 +343,15 @@
                 <div class="module-head"><i class="fas fa-server"></i> SMTP Config</div>
                 <div class="module-body">
                     <div class="mix-row">
-                        <div class="field"><label><i class="fas fa-server"></i> Server</label><input type="text" id="smtp_server" name="smtp_server"
-                                placeholder="smtp.relay.com" required></div>
-                        <div class="field"><label><i class="fas fa-plug"></i> Port</label><input type="number" id="smtp_port" name="smtp_port"
-                                value="25" required></div>
+                        <div class="field"><label><i class="fas fa-server"></i> Server</label><input type="text"
+                                id="smtp_server" name="smtp_server" placeholder="smtp.relay.com" required></div>
+                        <div class="field"><label><i class="fas fa-plug"></i> Port</label><input type="number"
+                                id="smtp_port" name="smtp_port" value="25" required></div>
                     </div>
-                    <div class="field"><label><i class="fas fa-user-circle"></i> Username</label><input type="text" id="username" name="username"
-                            required></div>
-                    <div class="field"><label><i class="fas fa-key"></i> Password</label><input type="password" id="password" name="password"
-                            required></div>
+                    <div class="field"><label><i class="fas fa-user-circle"></i> Username</label><input type="text"
+                            id="username" name="username" required></div>
+                    <div class="field"><label><i class="fas fa-key"></i> Password</label><input type="password"
+                            id="password" name="password" required></div>
                 </div>
             </div>
             <div class="module">
@@ -376,12 +376,26 @@
             <div class="module">
                 <div class="module-head"><i class="fas fa-bullseye"></i> Delivery Strategy</div>
                 <div class="module-body">
-                    <div style="font-size:13px; color:var(--soft); line-height:1.6;">
+                    <div style="font-size:13px; color:var(--soft); line-height:1.6; margin-bottom:12px;">
                         <strong>Warm-up:</strong> Start with low volumes (10-50/day) on fresh IPs.<br><br>
                         <strong>Header Injection:</strong> Adding randomized X-headers (like X-Mailer or
                         X-Originating-IP) can help bypass basic static signatures.<br><br>
                         <strong>Time-gapping:</strong> Use the config tab to slow down bulk-sends to mimic human
                         activity.
+                    </div>
+                    <div class="field">
+                        <label>Espoofer Payload (Advanced)</label>
+                        <select id="espoofer_payload" name="espoofer_payload">
+                            <option value="none">Standard Sending (smtplib)</option>
+                            <option value="server_a1">A1: Non-existent subdomain</option>
+                            <option value="server_a2">A2: Empty MAIL FROM</option>
+                            <option value="server_a8">A8: Multiple From headers</option>
+                            <option value="server_a9">A9: Multiple From (space)</option>
+                            <option value="server_a11">A11: Multiple From (folding)</option>
+                            <option value="server_a18">A18: Special chars precedence</option>
+                            <option value="client_a1">Client A1: Multiple From</option>
+                        </select>
+                        <div class="hint">Utilizes raw socket connections to send malformed SMTP sequences bypassing standard library limits.</div>
                     </div>
                 </div>
             </div>
@@ -431,10 +445,13 @@
         </div>
         <div class="mt-16" style="display:flex; justify-content:space-between; align-items:center;">
             <div>
-                <button type="button" class="btn btn-ghost" onclick="openDrafts()"><i class="fas fa-folder-open"></i> Manage Drafts <span id="draftCount" class="badge badge-mute" style="margin-left:4px;">0</span></button>
+                <button type="button" class="btn btn-ghost" onclick="openDrafts()"><i class="fas fa-folder-open"></i>
+                    Manage Drafts <span id="draftCount" class="badge badge-mute"
+                        style="margin-left:4px;">0</span></button>
             </div>
             <div style="display:flex; justify-content:flex-end; gap:12px; align-items:center;">
-                <button type="button" class="btn btn-ghost" onclick="openSaveDraftModal()"><i class="fas fa-save"></i> Save Draft</button>
+                <button type="button" class="btn btn-ghost" onclick="openSaveDraftModal()"><i class="fas fa-save"></i>
+                    Save Draft</button>
                 <div style="width:1px; height:24px; background:var(--border); margin:0 4px;"></div>
                 <button type="button" class="btn btn-ghost" onclick="openForge()"
                     style="border: 1px solid var(--border);"><i class="fas fa-hammer"></i> Forge Template</button>
@@ -460,15 +477,15 @@
             <div class="module-body">
                 <form id="testForm">
                     <div class="mix-row">
-                        <div class="field"><label><i class="fas fa-server"></i> Server</label><input type="text" class="input" id="test_smtp_server"
-                                name="smtp_server" required></div>
-                        <div class="field"><label><i class="fas fa-plug"></i> Port</label><input type="number" class="input" id="test_smtp_port"
-                                name="smtp_port" value="25" required></div>
+                        <div class="field"><label><i class="fas fa-server"></i> Server</label><input type="text"
+                                class="input" id="test_smtp_server" name="smtp_server" required></div>
+                        <div class="field"><label><i class="fas fa-plug"></i> Port</label><input type="number"
+                                class="input" id="test_smtp_port" name="smtp_port" value="25" required></div>
                     </div>
-                    <div class="field"><label><i class="fas fa-user-circle"></i> Username</label><input type="text" class="input" id="test_smtp_user"
-                            name="smtp_user" required></div>
-                    <div class="field"><label><i class="fas fa-key"></i> Password</label><input type="password" class="input" id="test_smtp_pass"
-                            name="smtp_pass" required></div>
+                    <div class="field"><label><i class="fas fa-user-circle"></i> Username</label><input type="text"
+                            class="input" id="test_smtp_user" name="smtp_user" required></div>
+                    <div class="field"><label><i class="fas fa-key"></i> Password</label><input type="password"
+                            class="input" id="test_smtp_pass" name="smtp_pass" required></div>
                     <button type="submit" class="btn btn-white btn-full">Verify Connection</button>
                 </form>
             </div>
@@ -579,6 +596,7 @@
                                 placeholder="example.com, target.co" required>
                             <div class="hint">Comma-separated for bulk</div>
                         </div>
+                        <label class="checkbox-row" style="margin-bottom:12px;"><input type="checkbox" id="scan_subdomains" name="scan_subdomains"> Scan all subdomains</label>
                         <button type="submit" class="btn btn-white btn-full">Run Recon</button>
                     </form>
                 </div>
@@ -1110,12 +1128,13 @@
         </div>
         <div class="modal-body">
             <div style="position:relative; margin-bottom:20px;">
-                <i class="fas fa-search" style="position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--muted); font-size:14px;"></i>
-                <input type="text" id="draftSearch" placeholder="Search by name or subject..." 
+                <i class="fas fa-search"
+                    style="position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--muted); font-size:14px;"></i>
+                <input type="text" id="draftSearch" placeholder="Search by name or subject..."
                     style="width:100%; padding:12px 12px 12px 42px; background:var(--bg); border:1px solid var(--border); border-radius:var(--radius); color:var(--white); font-size:14px; transition:border-color 0.2s;"
                     oninput="filterDrafts()">
             </div>
-            
+
             <div id="draftsListEmpty" style="text-align:center; padding:60px 20px; color:var(--muted);">
                 <i class="fas fa-folder-open" style="font-size:32px; margin-bottom:16px; opacity:0.3;"></i>
                 <p>No saved drafts yet.</p>

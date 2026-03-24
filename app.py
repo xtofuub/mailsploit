@@ -34,6 +34,7 @@ import json
 from datetime import datetime
 import hashlib
 import requests
+from espoofer_core import send_espoofer_payload, test_cases
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-here'  # Change this in production
@@ -414,6 +415,27 @@ def get_dns_resolver():
     r.lifetime = 10
     return r
 
+def resolve_doh(domain, record_type='A'):
+    """Generic DoH resolver to bypass local UDP 53 blocks"""
+    type_map = {'A': 1, 'CNAME': 5, 'TXT': 16}
+    type_code = type_map.get(record_type.upper(), 1)
+    url = f"https://dns.google/resolve?name={domain}&type={type_code}"
+    try:
+        response = requests.get(url, timeout=3)
+        if response.status_code == 200:
+            data = response.json()
+            if data.get('Status') == 0 and 'Answer' in data:
+                if type_code == 16:
+                    return [ans['data'].strip('"') for ans in data['Answer'] if ans['type'] == 16]
+                return [ans['data'] for ans in data['Answer'] if ans['type'] == type_code]
+    except Exception:
+        pass
+    return []
+
+def resolve_txt_doh(domain):
+    """Legacy wrapper for TXT records"""
+    return resolve_doh(domain, 'TXT')
+
 def check_domain_spoofing(domain):
     """
     Check if a domain is vulnerable to email spoofing by analyzing SPF and DMARC records
@@ -443,86 +465,75 @@ def check_domain_spoofing(domain):
     resolver = get_dns_resolver()
     
     try:
-        # Check SPF record
-        try:
-            spf_records = resolver.resolve(domain, 'TXT')
-            for record in spf_records:
-                record_text = str(record).strip('"')
-                if record_text.startswith('v=spf1'):
-                    analysis['spf']['status'] = 'present'
-                    analysis['spf']['record'] = record_text
-                    # Check for strict/moderate qualifiers
-                    if '-all' in record_text or '~all' in record_text:
-                        analysis['spf']['vulnerable'] = False
-                    break
-        except (dns.resolver.NoAnswer, dns.resolver.NXDOMAIN, dns.exception.Timeout):
-            pass
-        except Exception:
-            pass
+        # Check SPF record via DoH
+        spf_records = resolve_txt_doh(domain)
+        for record_text in spf_records:
+            if record_text.startswith('v=spf1'):
+                analysis['spf']['status'] = 'present'
+                analysis['spf']['record'] = record_text
+                # Check for strict/moderate qualifiers
+                if '-all' in record_text or '~all' in record_text:
+                    analysis['spf']['vulnerable'] = False
+                break
         
-        # Check DMARC record
-        try:
-            dmarc_records = resolver.resolve(f'_dmarc.{domain}', 'TXT')
-            for record in dmarc_records:
-                record_text = str(record).strip('"')
+        # Check DMARC record (tree walk for subdomains) via DoH
+        domain_parts = domain.split('.')
+        dmarc_found = False
+        
+        for i in range(len(domain_parts) - 1):
+            check_domain = '.'.join(domain_parts[i:])
+            dmarc_records = resolve_txt_doh(f'_dmarc.{check_domain}')
+            for record_text in dmarc_records:
                 if record_text.startswith('v=DMARC1'):
                     analysis['dmarc']['status'] = 'present'
-                    analysis['dmarc']['record'] = record_text
+                    if not dmarc_found:
+                        analysis['dmarc']['record'] = record_text + (f' (inherited from {check_domain})' if domain != check_domain else '')
+                    dmarc_found = True
 
-                    # Normalize lowercase for parsing
                     record_lower = record_text.lower()
                     
-                    # Parse DMARC policy (p=)
-                    if 'p=quarantine' in record_lower:
-                        analysis['dmarc']['policy'] = 'quarantine'
-                        analysis['dmarc']['vulnerable'] = False
-                    elif 'p=reject' in record_lower:
-                        analysis['dmarc']['policy'] = 'reject'
-                        analysis['dmarc']['vulnerable'] = False
-                    elif 'p=none' in record_lower:
-                        analysis['dmarc']['policy'] = 'none'
-                        analysis['dmarc']['vulnerable'] = True
-                    else:
-                        analysis['dmarc']['policy'] = 'unknown'
-                        analysis['dmarc']['vulnerable'] = True
+                    # Parse policies
+                    p_policy = 'unknown'
+                    if 'p=quarantine' in record_lower: p_policy = 'quarantine'
+                    elif 'p=reject' in record_lower: p_policy = 'reject'
+                    elif 'p=none' in record_lower: p_policy = 'none'
 
-                    # Parse subdomain policy (sp=). If absent, DMARC inherits p= for subdomains.
-                    if 'sp=quarantine' in record_lower:
-                        analysis['dmarc']['subdomain_policy'] = 'quarantine'
-                        analysis['dmarc']['subdomain_vulnerable'] = False
-                    elif 'sp=reject' in record_lower:
-                        analysis['dmarc']['subdomain_policy'] = 'reject'
-                        analysis['dmarc']['subdomain_vulnerable'] = False
-                    elif 'sp=none' in record_lower:
-                        analysis['dmarc']['subdomain_policy'] = 'none'
-                        analysis['dmarc']['subdomain_vulnerable'] = True
-                    else:
-                        # Inherit primary policy
-                        analysis['dmarc']['subdomain_policy'] = analysis['dmarc']['policy']
-                        analysis['dmarc']['subdomain_vulnerable'] = analysis['dmarc']['vulnerable']
+                    sp_policy = p_policy
+                    if 'sp=quarantine' in record_lower: sp_policy = 'quarantine'
+                    elif 'sp=reject' in record_lower: sp_policy = 'reject'
+                    elif 'sp=none' in record_lower: sp_policy = 'none'
+
+                    is_inherited = (domain != check_domain)
+                    effective_policy = sp_policy if is_inherited else p_policy
+
+                    analysis['dmarc']['policy'] = effective_policy
+                    analysis['dmarc']['vulnerable'] = effective_policy not in ['quarantine', 'reject']
+                    
+                    analysis['dmarc']['subdomain_policy'] = sp_policy
+                    analysis['dmarc']['subdomain_vulnerable'] = sp_policy not in ['quarantine', 'reject']
                     break
-        except (dns.resolver.NoAnswer, dns.resolver.NXDOMAIN, dns.exception.Timeout):
-            pass
-        except Exception:
-            pass
+            
+            if dmarc_found:
+                break
+
         
         # Determine overall status
         if analysis['dmarc']['status'] != 'present':
             analysis['overall_status'] = 'vulnerable'
             analysis['summary'] = 'Domain lacks a DMARC record and is vulnerable to email spoofing.'
-        elif analysis['spf']['status'] == 'present' and not analysis['dmarc']['vulnerable']:
+        elif analysis['spf']['status'] != 'present':
+            analysis['overall_status'] = 'partially_secure'
+            analysis['summary'] = 'Domain has a DMARC record but lacks an SPF record.'
+        elif not analysis['dmarc']['vulnerable']:
             analysis['overall_status'] = 'secure'
             analysis['summary'] = 'Domain has proper SPF and DMARC records configured.'
-        elif analysis['spf']['status'] == 'present':
-            analysis['overall_status'] = 'vulnerable'
-            analysis['summary'] = 'Domain has SPF but DMARC policy is none, making it vulnerable.'
         else:
             analysis['overall_status'] = 'vulnerable'
-            analysis['summary'] = 'Domain lacks proper SPF records and DMARC is vulnerable to spoofing.'
+            analysis['summary'] = 'Domain has SPF but DMARC policy is none, making it vulnerable.'
 
         # If subdomains are spoofable, downgrade overall status to potentially spoofable
         if analysis['dmarc']['status'] == 'present' and analysis['dmarc'].get('subdomain_vulnerable'):
-            analysis['overall_status'] = 'vulnerable'
+            analysis['overall_status'] = 'vulnerable' 
             # Ensure summary mentions subdomain risk
             extra_note = ' Subdomains may be spoofable due to DMARC subdomain policy (sp).' 
             if extra_note.strip() not in analysis['summary']:
@@ -962,39 +973,55 @@ def send_email():
                     file.save(file_path)
                     attachments.append(file_path)
         
-        # Create spoofer instance
-        spoofer = EmailSpoofer(smtp_server, smtp_port, username, password)
+        espoofer_payload = request.form.get('espoofer_payload', 'none')
         
-        # Get all recipients for sending
-        all_recipients = to_list[:]
-        if cc_list:
-            all_recipients.extend(cc_list)
-        if bcc_list:
-            all_recipients.extend(bcc_list)
-        
-        # Send email multiple times if requested
         send_success = 0
         last_error = None
-        for i in range(send_count):
-            msg = spoofer.create_message(
-                from_name,
-                from_email,
-                reply_to if reply_to else None,
-                to_list,
-                cc_list,
-                None,
-                subject,
-                message,
-                html,
-                attachments if attachments else None
-            )
-            if add_xheaders:
-                msg = spoofer.spoof_x_headers(msg)
-            success, error_msg = spoofer.send_email(msg, all_recipients, envelope_sender=envelope_sender)
-            if success:
-                send_success += 1
-            else:
-                last_error = error_msg
+        
+        if espoofer_payload != 'none':
+            for i in range(send_count):
+                try:
+                    send_espoofer_payload(
+                        espoofer_payload, smtp_server, smtp_port, username, password,
+                        from_email, to_email, subject, message
+                    )
+                    send_success += 1
+                except Exception as e:
+                    import traceback
+                    traceback.print_exc()
+                    last_error = str(e)
+        else:
+            # Create spoofer instance
+            spoofer = EmailSpoofer(smtp_server, smtp_port, username, password)
+            
+            # Get all recipients for sending
+            all_recipients = to_list[:]
+            if cc_list:
+                all_recipients.extend(cc_list)
+            if bcc_list:
+                all_recipients.extend(bcc_list)
+            
+            # Send email multiple times if requested
+            for i in range(send_count):
+                msg = spoofer.create_message(
+                    from_name,
+                    from_email,
+                    reply_to if reply_to else None,
+                    to_list,
+                    cc_list,
+                    None,
+                    subject,
+                    message,
+                    html,
+                    attachments if attachments else None
+                )
+                if add_xheaders:
+                    msg = spoofer.spoof_x_headers(msg)
+                success, error_msg = spoofer.send_email(msg, all_recipients, envelope_sender=envelope_sender)
+                if success:
+                    send_success += 1
+                else:
+                    last_error = error_msg
         
         
         # Clean up uploaded files
@@ -1159,31 +1186,100 @@ def analyze_headers():
         return jsonify({'success': False, 'error': str(e)})
 
 @app.route('/check_multiple_domains', methods=['POST'])
-def check_multiple_domains_endpoint():
+def check_multiple_domains():
     """Check multiple domains for spoofing vulnerability"""
     try:
         data = request.get_json()
-        domains_text = data.get('domains', '').strip()
+        domains_str = data.get('domains', '').strip()
+        scan_subdomains = data.get('scan_subdomains', False)
         
-        if not domains_text:
+        if not domains_str:
             return jsonify({'success': False, 'error': 'Domain list is required'})
         
         # Parse domains (one per line or comma-separated)
-        domains_list = []
-        for line in domains_text.replace(',', '\n').split('\n'):
+        domain_list = []
+        for line in domains_str.replace(',', '\n').split('\n'):
             domain = line.strip()
             if domain:
-                domains_list.append(domain)
+                domain_list.append(domain)
         
-        if not domains_list:
+        if not domain_list:
             return jsonify({'success': False, 'error': 'No valid domains found'})
         
-        # Check domains
-        results = check_multiple_domains(domains_list)
+        crt_error = None
+        all_domains = set(domain_list)
+        if scan_subdomains:
+            for domain in domain_list:
+                try:
+                    url = f"https://crt.sh/?q=%.{domain}&output=json"
+                    response = requests.get(url, timeout=10)
+                    if response.status_code == 200:
+                        for entry in response.json():
+                            names = entry.get('name_value', '').split('\n')
+                            for name in names:
+                                clean_name = name.replace('*.', '').strip()
+                                if clean_name.endswith(domain):
+                                    all_domains.add(clean_name)
+                    else:
+                        raise Exception(f"status {response.status_code}")
+                except Exception as e:
+                    # Fallback to hacker target API if crt.sh fails
+                    try:
+                        url = f"https://api.hackertarget.com/hostsearch/?q={domain}"
+                        response = requests.get(url, timeout=10)
+                        if response.status_code == 200:
+                            for line in response.text.split('\n'):
+                                if ',' in line:
+                                    subdomain = line.split(',')[0].strip().lower()
+                                    if subdomain.endswith(domain):
+                                        all_domains.add(subdomain)
+                        else:
+                            crt_error = f"APIs unavailable (crt.sh & hackertarget). Missing subdomains."
+                    except Exception as e2:
+                        crt_error = f"APIs timed out (crt.sh & hackertarget). Missing subdomains."
+                    
+        all_domains = list(all_domains)
         
+        # Check domains
+        results = []
+        secure_count = 0
+        partially_secure_count = 0
+        vulnerable_count = 0
+        
+        for domain in all_domains:
+            try:
+                analysis = check_domain_spoofing(domain)
+                results.append(analysis)
+                
+                if analysis['overall_status'] == 'secure':
+                    secure_count += 1
+                elif analysis['overall_status'] == 'partially_secure':
+                    partially_secure_count += 1
+                else:
+                    vulnerable_count += 1
+                    
+            except Exception as e:
+                # Log error but continue with other domains
+                results.append({
+                    'domain': domain,
+                    'error': str(e),
+                    'overall_status': 'error'
+                })
+        
+        summary_text = f"Checked {len(all_domains)} domains: {secure_count} secure, {partially_secure_count} potentially spoofable, {vulnerable_count} vulnerable"
+        if crt_error:
+            summary_text += f" (WARNING: {crt_error})"
+            
         return jsonify({
             'success': True,
-            'results': results
+            'results': results,
+            'summary': {
+                'total_checked': len(all_domains),
+                'secure_count': secure_count,
+                'partially_secure_count': partially_secure_count,
+                'vulnerable_count': vulnerable_count,
+                'crt_error': crt_error
+            }
         })
         
     except Exception as e:
@@ -1518,40 +1614,32 @@ def intel_subdomain():
             def enrich_subdomain(sub):
                 res = {"subdomain": sub, "records": {}, "security": {"protected": False}}
                 
-                # Check A record
-                try:
-                    a_rec = dns.resolver.resolve(sub, 'A')
-                    res["records"]["A"] = [str(r) for r in a_rec]
-                except: pass
+                # Check A record via DoH
+                a_rec = resolve_doh(sub, 'A')
+                if a_rec:
+                    res["records"]["A"] = a_rec
                 
-                # Check CNAME
-                try:
-                    cname_rec = dns.resolver.resolve(sub, 'CNAME')
-                    res["records"]["CNAME"] = [str(r) for r in cname_rec]
-                except: pass
+                # Check CNAME via DoH
+                cname_rec = resolve_doh(sub, 'CNAME')
+                if cname_rec:
+                    res["records"]["CNAME"] = cname_rec
                 
-                # Check SPF
-                try:
-                    spf_txt = dns.resolver.resolve(sub, 'TXT')
-                    for r in spf_txt:
-                        txt = str(r).strip('"')
-                        if txt.startswith('v=spf1'):
-                            res["records"]["SPF"] = txt
-                            break
-                except: pass
+                # Check SPF via DoH
+                spf_txt = resolve_doh(sub, 'TXT')
+                for txt in spf_txt:
+                    if txt.startswith('v=spf1'):
+                        res["records"]["SPF"] = txt
+                        break
                 
-                # Check DMARC
-                try:
-                    dmarc_txt = dns.resolver.resolve(f'_dmarc.{sub}', 'TXT')
-                    for r in dmarc_txt:
-                        txt = str(r).strip('"')
-                        if txt.startswith('v=DMARC1'):
-                            res["records"]["DMARC"] = txt
-                            # Flag as protected if policy is reject or quarantine
-                            if 'p=reject' in txt.lower() or 'p=quarantine' in txt.lower():
-                                res["security"]["protected"] = True
-                            break
-                except: pass
+                # Check DMARC via DoH
+                dmarc_txt = resolve_doh(f'_dmarc.{sub}', 'TXT')
+                for txt in dmarc_txt:
+                    if txt.startswith('v=DMARC1'):
+                        res["records"]["DMARC"] = txt
+                        # Flag as protected if policy is reject or quarantine
+                        if 'p=reject' in txt.lower() or 'p=quarantine' in txt.lower():
+                            res["security"]["protected"] = True
+                        break
                 
                 return res
 
@@ -1630,10 +1718,9 @@ def audit_dnsbl():
         nonlocal listed_count
         query = f"{reversed_ip}.{provider}"
         try:
-            answers = dns.resolver.resolve(query, "A")
-            # If it resolves, it's listed
-            return {"provider": provider, "listed": True, "return_code": str(answers[0])}
-        except dns.resolver.NXDOMAIN:
+            answers = resolve_doh(query, "A")
+            if answers:
+                return {"provider": provider, "listed": True, "return_code": str(answers[0])}
             return {"provider": provider, "listed": False}
         except Exception:
             return {"provider": provider, "listed": False, "error": "Timeout or resolving error"}
@@ -1669,8 +1756,8 @@ def update_self():
     try:
         # Check if it's a git repo
         subprocess.run(["git", "rev-parse", "--is-inside-work-tree"], check=True, capture_output=True)
-        print("\033[94m[*] Pulling latest changes from origin main...\033[0m")
-        result = subprocess.run(["git", "pull"], check=True, capture_output=True, text=True)
+        print("\033[94m[*] Pulling latest changes from origin master...\033[0m")
+        result = subprocess.run(["git", "pull", "origin", "master"], check=True, capture_output=True, text=True)
         print(result.stdout)
         print("\033[92m[+] Update complete! Please restart the application.\033[0m")
         sys.exit(0)

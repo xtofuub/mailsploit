@@ -431,6 +431,8 @@ async function checkDomain() {
 
     if (extractedDomains.length === 0) return toast('No valid domains found in text', 'fail');
 
+    const scanSubdomains = document.getElementById('scan_subdomains')?.checked || false;
+
     const ad = document.getElementById('spoofAnalysis'), rd = document.getElementById('spoofResults');
     if (ad) ad.innerHTML = '<div style="color:var(--muted);font-size:12px;">Analyzing ' + extractedDomains.length + ' domain(s)...</div>';
     if (rd) rd.style.display = 'block';
@@ -438,15 +440,15 @@ async function checkDomain() {
     showLoading('Running recon...');
     try {
         let d;
-        if (extractedDomains.length > 1) {
-            const r = await fetch('/check_multiple_domains', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ domains: extractedDomains.join(',') }) });
+        if (extractedDomains.length > 1 || scanSubdomains) {
+            const r = await fetch('/check_multiple_domains', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ domains: extractedDomains.join(','), scan_subdomains: scanSubdomains }) });
             d = await r.json();
         } else {
-            const r = await fetch('/check_spoofing', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ domain: extractedDomains[0] }) });
+            const r = await fetch('/check_spoofing', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ domain: extractedDomains[0], scan_subdomains: scanSubdomains }) });
             d = await r.json();
         }
         hideLoading();
-        if (d.success) { inc('domains'); extractedDomains.length > 1 ? renderMultiRecon(d.results) : renderRecon(d.analysis); }
+        if (d.success) { inc('domains'); (extractedDomains.length > 1 || scanSubdomains) ? renderMultiRecon(d) : renderRecon(d.analysis); }
         else toast(d.error, 'fail');
     } catch (e) { hideLoading(); toast('Error: ' + e.message, 'fail'); }
 }
@@ -664,7 +666,7 @@ function renderMultiRecon(res) {
     const ad = document.getElementById('spoofAnalysis');
 
     // Build accordion items instead of a table
-    const accordionHtml = res.domains.map((d, index) => {
+    const accordionHtml = res.results.map((d, index) => {
         const bdg = d.overall_status === 'secure' ? 'badge-ok' : d.overall_status === 'partially_secure' ? 'badge-warn' : 'badge-fail';
         const stText = d.overall_status.toUpperCase().replace('_', ' ');
         const spfBdg = d.spf.status === 'present' ? 'badge-ok' : 'badge-fail';
@@ -718,12 +720,12 @@ function renderMultiRecon(res) {
         </div>`;
     }).join('');
 
-    ad.innerHTML = `<div class="module"><div class="module-head">Bulk Recon — ${res.total_checked} domains</div>
+    ad.innerHTML = `<div class="module"><div class="module-head">Bulk Recon — ${res.summary.total_checked} domains</div>
         <div class="module-body">
             <div class="field-row-3 mb-16" style="text-align:center;">
-                <div><div class="badge badge-ok">${res.secure_count}</div><div style="font-size:11px;color:var(--muted);margin-top:4px;">Secure</div></div>
-                <div><div class="badge badge-warn">${res.partially_secure_count}</div><div style="font-size:11px;color:var(--muted);margin-top:4px;">Partial</div></div>
-                <div><div class="badge badge-fail">${res.vulnerable_count}</div><div style="font-size:11px;color:var(--muted);margin-top:4px;">Vulnerable</div></div>
+                <div><div class="badge badge-ok">${res.summary.secure_count}</div><div style="font-size:11px;color:var(--muted);margin-top:4px;">Secure</div></div>
+                <div><div class="badge badge-warn">${res.summary.partially_secure_count}</div><div style="font-size:11px;color:var(--muted);margin-top:4px;">Partial</div></div>
+                <div><div class="badge badge-fail">${res.summary.vulnerable_count}</div><div style="font-size:11px;color:var(--muted);margin-top:4px;">Vulnerable</div></div>
             </div>
             <div class="bulk-recon-list" style="margin-top: 16px;">
                 ${accordionHtml}
@@ -1221,7 +1223,7 @@ function closeSaveDraftModal() {
 function confirmSaveDraft(btn) {
     const nameInput = document.getElementById('draft_name_modal');
     const name = nameInput.value.trim() || 'Untitled Draft (' + new Date().toLocaleTimeString() + ')';
-    
+
     const draft = {
         name: name,
         date: new Date().toLocaleString(),
@@ -1244,10 +1246,10 @@ function confirmSaveDraft(btn) {
     let drafts = JSON.parse(localStorage.getItem('mailsploit_drafts') || '[]');
     drafts.unshift(draft);
     localStorage.setItem('mailsploit_drafts', JSON.stringify(drafts));
-    
+
     nameInput.value = '';
     updateDraftUI();
-    
+
     // Visual Feedback
     if (btn) {
         const oldHtml = btn.innerHTML;
@@ -1267,7 +1269,7 @@ function openDrafts() {
     const drafts = JSON.parse(localStorage.getItem('mailsploit_drafts') || '[]');
     const list = document.getElementById('draftsList');
     const empty = document.getElementById('draftsListEmpty');
-    
+
     list.innerHTML = '';
     if (drafts.length === 0) {
         empty.style.display = 'block';
@@ -1300,7 +1302,7 @@ function loadDraft(index) {
     const drafts = JSON.parse(localStorage.getItem('mailsploit_drafts') || '[]');
     const d = drafts[index];
     if (!d) return;
-    
+
     const data = d.data;
     for (const key in data) {
         const el = document.getElementById(key);
@@ -1309,7 +1311,7 @@ function loadDraft(index) {
             else el.value = data[key];
         }
     }
-    
+
     closeDrafts();
     // Visual Feedback on Load
     const sendSection = document.getElementById('section-send');
