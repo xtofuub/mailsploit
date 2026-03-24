@@ -1827,3 +1827,69 @@ a:hover { color: var(--pure); }
   .bento-stat-value { font-size: 48px; }
   .bento-big-number { font-size: 48px; }
 }
+
+/* ═══ Premium Glass Toggle Switch ═══ */
+.premium-toggle {
+    position: relative;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+    font-size: 13px;
+    color: var(--soft);
+    transition: color 0.3s ease;
+}
+
+.premium-toggle:hover {
+    color: var(--white);
+}
+
+.premium-toggle input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+.toggle-slider {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
+    border-radius: 30px;
+    margin-right: 12px;
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 3px;
+    bottom: 3px;
+    background: var(--muted);
+    border-radius: 50%;
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+.premium-toggle input:checked + .toggle-slider {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--white);
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.05), inset 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.premium-toggle input:checked + .toggle-slider:before {
+    transform: translateX(20px);
+    background: var(--pure);
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.4);
+}
+
+.premium-toggle input:focus + .toggle-slider {
+    outline: 1px solid var(--soft);
+    outline-offset: 2px;
+}

@@ -383,20 +383,7 @@
                         <strong>Time-gapping:</strong> Use the config tab to slow down bulk-sends to mimic human
                         activity.
                     </div>
-                    <div class="field">
-                        <label>Espoofer Payload (Advanced)</label>
-                        <select id="espoofer_payload" name="espoofer_payload">
-                            <option value="none">Standard Sending (smtplib)</option>
-                            <option value="server_a1">A1: Non-existent subdomain</option>
-                            <option value="server_a2">A2: Empty MAIL FROM</option>
-                            <option value="server_a8">A8: Multiple From headers</option>
-                            <option value="server_a9">A9: Multiple From (space)</option>
-                            <option value="server_a11">A11: Multiple From (folding)</option>
-                            <option value="server_a18">A18: Special chars precedence</option>
-                            <option value="client_a1">Client A1: Multiple From</option>
-                        </select>
-                        <div class="hint">Utilizes raw socket connections to send malformed SMTP sequences bypassing standard library limits.</div>
-                    </div>
+
                 </div>
             </div>
         </div>
@@ -596,7 +583,11 @@
                                 placeholder="example.com, target.co" required>
                             <div class="hint">Comma-separated for bulk</div>
                         </div>
-                        <label class="checkbox-row" style="margin-bottom:12px;"><input type="checkbox" id="scan_subdomains" name="scan_subdomains"> Scan all subdomains</label>
+                        <label class="premium-toggle" style="margin-bottom:16px; margin-top:12px;">
+                            <input type="checkbox" id="scan_subdomains" name="scan_subdomains">
+                            <div class="toggle-slider"></div>
+                            <span style="font-weight: 500; letter-spacing: 0.3px;">Scan all subdomains (Deep Recon)</span>
+                        </label>
                         <button type="submit" class="btn btn-white btn-full">Run Recon</button>
                     </form>
                 </div>

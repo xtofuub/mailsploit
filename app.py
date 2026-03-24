@@ -34,7 +34,6 @@ import json
 from datetime import datetime
 import hashlib
 import requests
-from espoofer_core import send_espoofer_payload, test_cases
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-here'  # Change this in production
@@ -973,55 +972,40 @@ def send_email():
                     file.save(file_path)
                     attachments.append(file_path)
         
-        espoofer_payload = request.form.get('espoofer_payload', 'none')
-        
         send_success = 0
         last_error = None
         
-        if espoofer_payload != 'none':
-            for i in range(send_count):
-                try:
-                    send_espoofer_payload(
-                        espoofer_payload, smtp_server, smtp_port, username, password,
-                        from_email, to_email, subject, message
-                    )
-                    send_success += 1
-                except Exception as e:
-                    import traceback
-                    traceback.print_exc()
-                    last_error = str(e)
-        else:
-            # Create spoofer instance
-            spoofer = EmailSpoofer(smtp_server, smtp_port, username, password)
-            
-            # Get all recipients for sending
-            all_recipients = to_list[:]
-            if cc_list:
-                all_recipients.extend(cc_list)
-            if bcc_list:
-                all_recipients.extend(bcc_list)
-            
-            # Send email multiple times if requested
-            for i in range(send_count):
-                msg = spoofer.create_message(
-                    from_name,
-                    from_email,
-                    reply_to if reply_to else None,
-                    to_list,
-                    cc_list,
-                    None,
-                    subject,
-                    message,
-                    html,
-                    attachments if attachments else None
-                )
-                if add_xheaders:
-                    msg = spoofer.spoof_x_headers(msg)
-                success, error_msg = spoofer.send_email(msg, all_recipients, envelope_sender=envelope_sender)
-                if success:
-                    send_success += 1
-                else:
-                    last_error = error_msg
+        # Create spoofer instance
+        spoofer = EmailSpoofer(smtp_server, smtp_port, username, password)
+        
+        # Get all recipients for sending
+        all_recipients = to_list[:]
+        if cc_list:
+            all_recipients.extend(cc_list)
+        if bcc_list:
+            all_recipients.extend(bcc_list)
+        
+        # Send email multiple times if requested
+        for i in range(send_count):
+            msg = spoofer.create_message(
+                from_name,
+                from_email,
+                reply_to if reply_to else None,
+                to_list,
+                cc_list,
+                None,
+                subject,
+                message,
+                html,
+                attachments if attachments else None
+            )
+            if add_xheaders:
+                msg = spoofer.spoof_x_headers(msg)
+            success, error_msg = spoofer.send_email(msg, all_recipients, envelope_sender=envelope_sender)
+            if success:
+                send_success += 1
+            else:
+                last_error = error_msg
         
         
         # Clean up uploaded files
