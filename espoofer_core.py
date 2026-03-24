@@ -221,6 +221,8 @@ class MailSender(object):
         buff = StringIO()
         while True:
             data = sock.recv(1).decode("utf-8", errors="ignore")
+            if not data:
+                break
             buff.write(data)
             if '\n' in data: break
         val = buff.getvalue()
