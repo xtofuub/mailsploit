@@ -6,3 +6,4 @@ itsdangerous==2.1.2
 click==8.1.7
 blinker==1.6.3
 dnspython==2.4.2
+requests==2.31.0

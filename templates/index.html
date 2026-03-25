@@ -390,8 +390,16 @@
                 <div class="module-body">
                     <div class="field"><label>Display Name</label><input type="text" id="from_name" name="from_name"
                             required></div>
-                    <div class="field"><label>From Email</label><input type="email" id="from_email" name="from_email"
-                            required></div>
+                    <div class="field">
+                        <label style="display:flex; justify-content:space-between; align-items:center;">
+                            From Email
+                            <button type="button" class="btn btn-ghost btn-sm" onclick="applyHomoglyphFromEmail()" 
+                                    title="Spoof domain with homoglyphs" style="font-size:10px; padding:2px 6px;">
+                                <i class="fas fa-wand-magic-sparkles"></i> Homoglyph
+                            </button>
+                        </label>
+                        <input type="email" id="from_email" name="from_email" required>
+                    </div>
                     <div class="field"><label>Reply-To</label><input type="email" id="reply_to" name="reply_to">
                         <div class="hint">Auto-fills from sender</div>
                     </div>

@@ -39,13 +39,16 @@ app = Flask(__name__)
 app.secret_key = 'your-secret-key-here'  # Change this in production
 
 # Configuration
-UPLOAD_FOLDER = 'uploads'
+# Vercel's filesystem is read-only, only /tmp/ is writable
+if os.environ.get('VERCEL'):
+    UPLOAD_FOLDER = '/tmp'
+else:
+    UPLOAD_FOLDER = 'uploads'
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'doc', 'docx'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
-
-# Create upload directory if it doesn't exist
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 class EmailSpoofer:
     def __init__(self, smtp_server, smtp_port, username, password, debug_level=0):
@@ -963,7 +966,7 @@ def features():
 def send_via_api(consumer_key, consumer_secret, payload):
     """Generic REST API email sender (rebranded)"""
     import requests
-    url = "https://pro.eu.turbo-smtp.com/api/v2/mail/send"
+    url = "https://api.eu.turbo-smtp.com/api/v2/mail/send"
     headers = {
         "consumerKey": consumer_key,
         "consumerSecret": consumer_secret,
@@ -1024,7 +1027,17 @@ def send_email():
             if not all([consumer_key, consumer_secret]):
                 return jsonify({'success': False, 'error': 'Missing API Consumer Key or Consumer Secret'})
 
-            from_header = f"{from_name} <{from_email}>" if from_name else from_email
+            # Handle IDN (homoglyphs) for the API by encoding the domain as Punycode
+            if '@' in from_email:
+                u, d = from_email.rsplit('@', 1)
+                try:
+                    from_email_encoded = f"{u}@{d.encode('idna').decode('ascii')}"
+                except Exception:
+                    from_email_encoded = from_email
+            else:
+                from_email_encoded = from_email
+
+            from_header = f"{from_name} <{from_email_encoded}>" if from_name else from_email_encoded
 
             # Handle attachments — base64-encode for the API
             attachment_list = []
@@ -1051,16 +1064,17 @@ def send_email():
                 'from': from_header,
                 'to': to_email,
                 'subject': subject,
+                'content': message, # Always provide a text version for deliverability
             }
             if html:
                 payload['html_content'] = message
-            else:
-                payload['content'] = message
+            
             if cc:
                 payload['cc'] = cc
             if bcc:
                 payload['bcc'] = bcc
             if reply_to:
+                # Add Reply-To via custom_headers as it's not a top-level field in V2
                 payload['custom_headers'] = [{'header': 'Reply-To', 'value': reply_to}]
             if attachment_list:
                 payload['attachments'] = attachment_list

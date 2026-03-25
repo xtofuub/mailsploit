@@ -422,6 +422,47 @@ async function sendEmail() {
     } catch (e) { hideLoading(); toast('Error: ' + e.message, 'fail'); }
 }
 
+async function applyHomoglyphFromEmail() {
+    const fe = document.getElementById('from_email');
+    if (!fe || !fe.value.includes('@')) {
+        return toast('Enter a valid sender email first', 'fail');
+    }
+
+    const parts = fe.value.split('@');
+    const user = parts[0];
+    const domain = parts[1];
+
+    showLoading('Spoofing domain...');
+    try {
+        const r = await fetch('/bypass_homoglyph', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ domain: domain })
+        });
+        const d = await r.json();
+        hideLoading();
+
+        if (d.success && d.homoglyphs && d.homoglyphs.length > 0) {
+            // Pick a random homoglyph for variety
+            const randomGlyph = d.homoglyphs[Math.floor(Math.random() * d.homoglyphs.length)];
+            fe.value = `${user}@${randomGlyph}`;
+            
+            // Also update envelope sender if synced
+            const es = document.getElementById('envelope_sender');
+            if (es && es.dataset.synced === 'true') {
+                es.value = fe.value;
+            }
+
+            toast('Domain spoofed with homoglyph!', 'ok');
+        } else {
+            toast(d.error || 'No homoglyphs found for this domain', 'fail');
+        }
+    } catch (e) {
+        hideLoading();
+        toast('Error: ' + e.message, 'fail');
+    }
+}
+
 async function testConnection() {
     showLoading('Testing connection...');
     try {
