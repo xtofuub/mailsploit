@@ -1,2 +1,0 @@
-smtp.example.com|587|user@example.com|password123
-smtp.another.com|465|admin@another.com|securepass

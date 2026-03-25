@@ -207,27 +207,54 @@ function loadConfig() {
     }
 }
 
-// ── SMTP Credentials Persistence ─────────────────────────
-const smtpFields = ['smtp_server', 'smtp_port', 'username', 'password'];
+// ── Credential Persistence (obfuscated in localStorage) ──
+const SMTP_FIELDS = ['smtp_server', 'smtp_port', 'username', 'password'];
+const API_FIELDS  = ['consumer_key', 'consumer_secret'];
 
-function saveCredentials() {
-    const creds = {};
-    smtpFields.forEach(f => {
+function _encode(v) { try { return btoa(unescape(encodeURIComponent(v))); } catch { return ''; } }
+function _decode(v) { try { return decodeURIComponent(escape(atob(v))); } catch { return ''; } }
+
+function saveAllCredentials() {
+    const creds = { mode: (document.getElementById('send_mode')?.value || 'smtp') };
+    [...SMTP_FIELDS, ...API_FIELDS].forEach(f => {
         const el = document.getElementById(f);
-        if (el) creds[f] = el.value;
+        if (el) creds[f] = _encode(el.value);
     });
-    localStorage.setItem('ms_smtp_creds', JSON.stringify(creds));
+    localStorage.setItem('ms_creds', JSON.stringify(creds));
 }
 
-function loadCredentials() {
-    const saved = localStorage.getItem('ms_smtp_creds');
-    if (saved) {
-        const creds = JSON.parse(saved);
-        smtpFields.forEach(f => {
+function loadAllCredentials() {
+    const raw = localStorage.getItem('ms_creds');
+    if (!raw) return;
+    try {
+        const creds = JSON.parse(raw);
+        [...SMTP_FIELDS, ...API_FIELDS].forEach(f => {
             const el = document.getElementById(f);
-            if (el && creds[f]) el.value = creds[f];
+            if (el && creds[f]) el.value = _decode(creds[f]);
         });
+        // Restore mode toggle
+        if (creds.mode === 'api') {
+            const tog = document.getElementById('send_mode_toggle');
+            if (tog) { tog.checked = true; toggleSendMode(); }
+        }
+    } catch {}
+}
+
+function toggleSendMode() {
+    const checked = document.getElementById('send_mode_toggle')?.checked;
+    const smtpDiv = document.getElementById('smtp_mode_fields');
+    const apiDiv  = document.getElementById('api_mode_fields');
+    const modeEl  = document.getElementById('send_mode');
+    if (checked) {
+        if (smtpDiv) smtpDiv.style.display = 'none';
+        if (apiDiv)  apiDiv.style.display  = '';
+        if (modeEl)  modeEl.value = 'api';
+    } else {
+        if (smtpDiv) smtpDiv.style.display = '';
+        if (apiDiv)  apiDiv.style.display  = 'none';
+        if (modeEl)  modeEl.value = 'smtp';
     }
+    saveAllCredentials();
 }
 
 // ── Loading ───────────────────────────────────────────────
@@ -324,12 +351,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initial Config & Creds Load
     loadConfig();
-    loadCredentials();
+    loadAllCredentials();
 
-    // Attach listeners for credential saving
-    smtpFields.forEach(f => {
+    // Attach listeners for credential saving (both SMTP and API fields)
+    [...SMTP_FIELDS, ...API_FIELDS].forEach(f => {
         const el = document.getElementById(f);
-        if (el) el.addEventListener('input', saveCredentials);
+        if (el) el.addEventListener('input', saveAllCredentials);
     });
 
     // Config Listeners

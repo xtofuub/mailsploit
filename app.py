@@ -403,6 +403,45 @@ def test_smtp_server(server_info, validate_send=False, test_recipient=None):
     except Exception as e:
         return (server_info, False, str(e))
 
+
+TURBOSMTP_API_URL = 'https://api.turbo-smtp.com/api/v2/mail/send'
+
+def send_via_turbosmtp(consumer_key, consumer_secret, payload):
+    """
+    Send an email via the TurboSMTP REST API.
+
+    Args:
+        consumer_key (str): TurboSMTP Consumer Key.
+        consumer_secret (str): TurboSMTP Consumer Secret.
+        payload (dict): JSON body conforming to the TurboSMTP /mail/send schema.
+
+    Returns:
+        tuple: (success: bool, message: str)
+    """
+    headers = {
+        'consumerKey': consumer_key,
+        'consumerSecret': consumer_secret,
+        'Content-Type': 'application/json',
+    }
+    try:
+        resp = requests.post(TURBOSMTP_API_URL, json=payload, headers=headers, timeout=30)
+        if resp.status_code == 200:
+            data = resp.json()
+            mid = data.get('mid', '')
+            return (True, f"Email accepted by TurboSMTP (mid: {mid})")
+        else:
+            try:
+                err_data = resp.json()
+                errors = err_data.get('errors', [])
+                msg = err_data.get('message', resp.text)
+                if errors:
+                    msg = msg + ': ' + '; '.join(errors)
+            except Exception:
+                msg = resp.text or f'HTTP {resp.status_code}'
+            return (False, f"TurboSMTP API error {resp.status_code}: {msg}")
+    except Exception as exc:
+        return (False, str(exc))
+
 # Common public DNS resolvers for reliable fallback
 PUBLIC_DNS_RESOLVERS = ['8.8.8.8', '1.1.1.1', '8.8.4.4', '1.0.0.1']
 
@@ -921,107 +960,198 @@ def features():
     """Dedicated Features Landing Page"""
     return render_template('features.html')
 
+def send_via_api(consumer_key, consumer_secret, payload):
+    """Generic REST API email sender (rebranded)"""
+    import requests
+    url = "https://pro.eu.turbo-smtp.com/api/v2/mail/send"
+    headers = {
+        "consumerKey": consumer_key,
+        "consumerSecret": consumer_secret,
+        "Content-Type": "application/json"
+    }
+    try:
+        response = requests.post(url, json=payload, headers=headers, timeout=20)
+        if response.status_code in [200, 201, 202]:
+            return True, "Email sent successfully via API"
+        else:
+            try:
+                err_data = response.json()
+                err = err_data.get('message') or err_data.get('error') or response.text
+            except Exception:
+                err = response.text
+            return False, f"API error {response.status_code}: {err}"
+    except Exception as e:
+        return False, f"API connection error: {str(e)}"
+
 @app.route('/send_email', methods=['POST'])
 def send_email():
-    """Send spoofed email"""
+    """Send email via API or SMTP depending on send_mode"""
     try:
-        # Get form data
-        smtp_server = request.form.get('smtp_server')
-        smtp_port = int(request.form.get('smtp_port', 25))
-        username = request.form.get('username')
-        password = request.form.get('password')
-        from_name = request.form.get('from_name')
-        from_email = request.form.get('from_email')
-        reply_to = request.form.get('reply_to')
-        to_email = request.form.get('to_email')
-        cc = request.form.get('cc')
-        bcc = request.form.get('bcc')
+        send_mode = request.form.get('send_mode', 'smtp').strip().lower()
+
+        # Sender identity
+        from_name = request.form.get('from_name', '').strip()
+        from_email = request.form.get('from_email', '').strip()
+        reply_to = request.form.get('reply_to', '').strip()
+        envelope_sender = request.form.get('envelope_sender', '').strip()
+
+        # Recipients
+        to_email = request.form.get('to_email', '').strip()
+        cc = request.form.get('cc', '').strip()
+        bcc = request.form.get('bcc', '').strip()
+
+        # Message
         subject = request.form.get('subject', '')
         message = request.form.get('message', '')
         html = request.form.get('html') == 'on'
         add_xheaders = request.form.get('add_xheaders') == 'on'
-        
-        # Sender identity fallbacks
-        envelope_sender = request.form.get('envelope_sender')
-        if not envelope_sender or not envelope_sender.strip():
-            envelope_sender = from_email
-        # Send count (optional)
+
+        # Send count
         try:
             send_count = int(request.form.get('send_count', '1'))
         except Exception:
             send_count = 1
         send_count = max(1, min(100, send_count))
-        
-        # Validate required fields
-        if not all([smtp_server, username, password, from_name, from_email, to_email]):
-            return jsonify({'success': False, 'error': 'Missing required fields'})
-        
-        # Parse recipients
-        to_list = [email.strip() for email in to_email.split(',') if email.strip()]
-        cc_list = [email.strip() for email in cc.split(',') if email.strip()] if cc else None
-        bcc_list = [email.strip() for email in bcc.split(',') if email.strip()] if bcc else None
-        
-        # Handle file attachments
-        attachments = []
-        if 'attachments' in request.files:
-            files = request.files.getlist('attachments')
-            for file in files:
-                if file and file.filename and allowed_file(file.filename):
-                    filename = secure_filename(file.filename)
-                    file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                    file.save(file_path)
-                    attachments.append(file_path)
-        
-        send_success = 0
-        last_error = None
-        
-        # Create spoofer instance
-        spoofer = EmailSpoofer(smtp_server, smtp_port, username, password)
-        
-        # Get all recipients for sending
-        all_recipients = to_list[:]
-        if cc_list:
-            all_recipients.extend(cc_list)
-        if bcc_list:
-            all_recipients.extend(bcc_list)
-        
-        # Send email multiple times if requested
-        for i in range(send_count):
-            msg = spoofer.create_message(
-                from_name,
-                from_email,
-                reply_to if reply_to else None,
-                to_list,
-                cc_list,
-                None,
-                subject,
-                message,
-                html,
-                attachments if attachments else None
-            )
-            if add_xheaders:
-                msg = spoofer.spoof_x_headers(msg)
-            success, error_msg = spoofer.send_email(msg, all_recipients, envelope_sender=envelope_sender)
-            if success:
-                send_success += 1
+
+        if not all([from_email, to_email]):
+            return jsonify({'success': False, 'error': 'Missing From Email or To fields'})
+
+        # ── API MODE ──────────────────────────────────────
+        if send_mode == 'api':
+            consumer_key = request.form.get('consumer_key', '').strip()
+            consumer_secret = request.form.get('consumer_secret', '').strip()
+
+            if not all([consumer_key, consumer_secret]):
+                return jsonify({'success': False, 'error': 'Missing API Consumer Key or Consumer Secret'})
+
+            from_header = f"{from_name} <{from_email}>" if from_name else from_email
+
+            # Handle attachments — base64-encode for the API
+            attachment_list = []
+            saved_paths = []
+            if 'attachments' in request.files:
+                files = request.files.getlist('attachments')
+                for file in files:
+                    if file and file.filename and allowed_file(file.filename):
+                        filename = secure_filename(file.filename)
+                        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                        file.save(file_path)
+                        saved_paths.append(file_path)
+                        with open(file_path, 'rb') as f:
+                            encoded = base64.b64encode(f.read()).decode('utf-8')
+                        import mimetypes
+                        mime_type = mimetypes.guess_type(filename)[0] or 'application/octet-stream'
+                        attachment_list.append({
+                            'content': encoded,
+                            'name': filename,
+                            'type': mime_type,
+                        })
+
+            payload = {
+                'from': from_header,
+                'to': to_email,
+                'subject': subject,
+            }
+            if html:
+                payload['html_content'] = message
             else:
-                last_error = error_msg
-        
-        
-        # Clean up uploaded files
-        for attachment in attachments:
+                payload['content'] = message
+            if cc:
+                payload['cc'] = cc
+            if bcc:
+                payload['bcc'] = bcc
+            if reply_to:
+                payload['custom_headers'] = [{'header': 'Reply-To', 'value': reply_to}]
+            if attachment_list:
+                payload['attachments'] = attachment_list
+
+            send_success = 0
+            last_error = None
+            for _ in range(send_count):
+                success, msg = send_via_api(consumer_key, consumer_secret, payload)
+                if success:
+                    send_success += 1
+                else:
+                    last_error = msg
+
+            for path in saved_paths:
+                try:
+                    os.remove(path)
+                except Exception:
+                    pass
+
+        # ── SMTP MODE ─────────────────────────────────────
+        else:
+            smtp_server = request.form.get('smtp_server', '').strip()
+            smtp_port_str = request.form.get('smtp_port', '587').strip()
+            username = request.form.get('username', '').strip()
+            password = request.form.get('password', '').strip()
+
             try:
-                os.remove(attachment)
-            except:
-                pass
-        
+                smtp_port = int(smtp_port_str)
+            except Exception:
+                smtp_port = 587
+
+            if not all([smtp_server, username, password]):
+                return jsonify({'success': False, 'error': 'Missing SMTP Server, Username, or Password'})
+
+            if not envelope_sender:
+                envelope_sender = from_email
+
+            to_list = [e.strip() for e in to_email.split(',') if e.strip()]
+            cc_list = [e.strip() for e in cc.split(',') if e.strip()] if cc else None
+            bcc_list = [e.strip() for e in bcc.split(',') if e.strip()] if bcc else None
+
+            attachments = []
+            if 'attachments' in request.files:
+                files = request.files.getlist('attachments')
+                for file in files:
+                    if file and file.filename and allowed_file(file.filename):
+                        filename = secure_filename(file.filename)
+                        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                        file.save(file_path)
+                        attachments.append(file_path)
+
+            send_success = 0
+            last_error = None
+            spoofer = EmailSpoofer(smtp_server, smtp_port, username, password)
+
+            all_recipients = to_list[:]
+            if cc_list:
+                all_recipients.extend(cc_list)
+            if bcc_list:
+                all_recipients.extend(bcc_list)
+
+            for _ in range(send_count):
+                msg = spoofer.create_message(
+                    from_name, from_email,
+                    reply_to if reply_to else None,
+                    to_list, cc_list, None,
+                    subject, message, html,
+                    attachments if attachments else None
+                )
+                if add_xheaders:
+                    msg = spoofer.spoof_x_headers(msg)
+                success, error_msg = spoofer.send_email(msg, all_recipients, envelope_sender=envelope_sender)
+                if success:
+                    send_success += 1
+                else:
+                    last_error = error_msg
+
+            for attachment in attachments:
+                try:
+                    os.remove(attachment)
+                except Exception:
+                    pass
+
+        # ── Result ────────────────────────────────────────
         if send_success == send_count:
             return jsonify({'success': True, 'message': f'Email sent successfully ({send_success}/{send_count})'})
         elif send_success > 0:
-            return jsonify({'success': True, 'message': f'Partial success: sent {send_success}/{send_count}. Last error: {last_error or 'unknown'}'})
+            return jsonify({'success': True, 'message': f'Partial success: sent {send_success}/{send_count}. Last error: {last_error or "unknown"}'})
         else:
             return jsonify({'success': False, 'error': last_error or 'Failed to send email'})
-            
+
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
@@ -1169,6 +1299,17 @@ def analyze_headers():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
+import re as _re
+_VALID_DOMAIN_RE = _re.compile(r'^(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(\.[a-zA-Z0-9-]{1,63})*\.[a-zA-Z]{2,}$')
+
+def _is_valid_subdomain(name, parent_domain):
+    """Validate that a crt.sh name_value entry is a real subdomain."""
+    if not name or '@' in name or ' ' in name or '*' in name:
+        return False
+    if not (name == parent_domain or name.endswith('.' + parent_domain)):
+        return False
+    return bool(_VALID_DOMAIN_RE.match(name))
+
 @app.route('/check_multiple_domains', methods=['POST'])
 def check_multiple_domains():
     """Check multiple domains for spoofing vulnerability"""
@@ -1201,8 +1342,8 @@ def check_multiple_domains():
                         for entry in response.json():
                             names = entry.get('name_value', '').split('\n')
                             for name in names:
-                                clean_name = name.replace('*.', '').strip()
-                                if clean_name.endswith(domain):
+                                clean_name = name.replace('*.', '').strip().lower()
+                                if _is_valid_subdomain(clean_name, domain):
                                     all_domains.add(clean_name)
                     else:
                         raise Exception(f"status {response.status_code}")
@@ -1588,8 +1729,8 @@ def intel_subdomain():
             for entry in ct_data:
                 names = entry.get('name_value', '').split('\n')
                 for name in names:
-                    clean_name = name.replace('*.', '').strip()
-                    if clean_name.endswith(domain):
+                    clean_name = name.replace('*.', '').strip().lower()
+                    if _is_valid_subdomain(clean_name, domain):
                         subdomains.add(clean_name)
             
             # Enrich with DNS data concurrently
@@ -1702,12 +1843,17 @@ def audit_dnsbl():
         nonlocal listed_count
         query = f"{reversed_ip}.{provider}"
         try:
-            answers = resolve_doh(query, "A")
-            if answers:
-                return {"provider": provider, "listed": True, "return_code": str(answers[0])}
+            # Use local system DNS instead of Google DoH because providers like Spamhaus block public resolvers
+            answer = socket.gethostbyname(query)
+            # 127.255.255.x error codes (e.g., .254 for public DNS, .252 for typos)
+            if answer.startswith("127.255.255."):
+                return {"provider": provider, "listed": False, "error": f"Query blocked by provider ({answer})"}
+            return {"provider": provider, "listed": True, "return_code": answer}
+        except socket.gaierror:
+            # NXDOMAIN means not listed
             return {"provider": provider, "listed": False}
-        except Exception:
-            return {"provider": provider, "listed": False, "error": "Timeout or resolving error"}
+        except Exception as e:
+            return {"provider": provider, "listed": False, "error": str(e)}
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
         bl_results = list(executor.map(check_dnsbl, dnsbl_providers))

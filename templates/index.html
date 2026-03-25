@@ -334,24 +334,55 @@
     <div class="tool-header" style="display:flex; justify-content:space-between; align-items:center;">
         <div>
             <h2>Send Email</h2>
-            <p>Compose and transmit test emails via SMTP</p>
+            <p>Compose and transmit test emails</p>
         </div>
     </div>
     <form id="emailForm" enctype="multipart/form-data">
         <div class="field-row-3">
             <div class="module">
-                <div class="module-head"><i class="fas fa-server"></i> SMTP Config</div>
+                <div class="module-head" style="display:flex; justify-content:space-between; align-items:center;">
+                    <span><i class="fas fa-plug"></i> Connection</span>
+                    <label class="premium-toggle" style="margin:0;">
+                        <input type="checkbox" id="send_mode_toggle" onchange="toggleSendMode()">
+                        <div class="toggle-slider"></div>
+                        <span style="font-weight:500; letter-spacing:0.3px; font-size:12px;">API Mode</span>
+                    </label>
+                </div>
                 <div class="module-body">
-                    <div class="mix-row">
-                        <div class="field"><label><i class="fas fa-server"></i> Server</label><input type="text"
-                                id="smtp_server" name="smtp_server" placeholder="smtp.relay.com" required></div>
-                        <div class="field"><label><i class="fas fa-plug"></i> Port</label><input type="number"
-                                id="smtp_port" name="smtp_port" value="25" required></div>
+                    <!-- Hidden field to pass the mode to the backend -->
+                    <input type="hidden" id="send_mode" name="send_mode" value="smtp">
+
+                    <!-- SMTP Mode Fields (default) -->
+                    <div id="smtp_mode_fields">
+                        <div class="mix-row">
+                            <div class="field"><label><i class="fas fa-server"></i> Server</label><input type="text"
+                                    id="smtp_server" name="smtp_server" placeholder="smtp.relay.com"></div>
+                            <div class="field"><label><i class="fas fa-plug"></i> Port</label><input type="number"
+                                    id="smtp_port" name="smtp_port" value="587"></div>
+                        </div>
+                        <div class="field"><label><i class="fas fa-user-circle"></i> Username</label><input type="text"
+                                id="username" name="username"></div>
+                        <div class="field"><label><i class="fas fa-key"></i> Password</label><input type="password"
+                                id="password" name="password"></div>
                     </div>
-                    <div class="field"><label><i class="fas fa-user-circle"></i> Username</label><input type="text"
-                            id="username" name="username" required></div>
-                    <div class="field"><label><i class="fas fa-key"></i> Password</label><input type="password"
-                            id="password" name="password" required></div>
+
+                    <!-- API Mode Fields (hidden by default) -->
+                    <div id="api_mode_fields" style="display:none;">
+                        <div class="field">
+                            <label><i class="fas fa-id-badge"></i> Consumer Key</label>
+                            <input type="text" id="consumer_key" name="consumer_key"
+                                   placeholder="Your API consumer key" autocomplete="off">
+                        </div>
+                        <div class="field">
+                            <label><i class="fas fa-lock"></i> Consumer Secret</label>
+                            <input type="password" id="consumer_secret" name="consumer_secret"
+                                   placeholder="••••••••••••••••••••" autocomplete="off">
+                        </div>
+                        <div class="hint" style="margin-top:6px;">
+                            <i class="fas fa-info-circle"></i>
+                            Your API credentials are encrypted and stored locally in the browser.
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="module">
@@ -470,9 +501,9 @@
                                 class="input" id="test_smtp_port" name="smtp_port" value="25" required></div>
                     </div>
                     <div class="field"><label><i class="fas fa-user-circle"></i> Username</label><input type="text"
-                            class="input" id="test_smtp_user" name="smtp_user" required></div>
+                            class="input" id="test_username" name="username" required></div>
                     <div class="field"><label><i class="fas fa-key"></i> Password</label><input type="password"
-                            class="input" id="test_smtp_pass" name="smtp_pass" required></div>
+                            class="input" id="test_password" name="password" required></div>
                     <button type="submit" class="btn btn-white btn-full">Verify Connection</button>
                 </form>
             </div>
