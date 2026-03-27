@@ -141,7 +141,29 @@ function initScrollReveal() {
 
 document.addEventListener('DOMContentLoaded', () => {
     initScrollReveal();
+    initNavbarScroll();
 });
+
+function initNavbarScroll() {
+    const navbar = document.querySelector('.navbar-wrap');
+    if (!navbar) return;
+    
+    let lastScrollY = window.scrollY;
+    
+    window.addEventListener('scroll', () => {
+        const currentScrollY = window.scrollY;
+        
+        if (currentScrollY > lastScrollY && currentScrollY > 100) {
+            // Scrolling down
+            navbar.classList.add('hidden');
+        } else {
+            // Scrolling up
+            navbar.classList.remove('hidden');
+        }
+        
+        lastScrollY = currentScrollY;
+    }, { passive: true });
+}
 
 // ── Config ────────────────────────────────────────────────
 window.bgSettings = { speed: 0.4 }; // Global for background access

@@ -80,12 +80,17 @@ a:hover { color: var(--pure); }
 /* ═══ Floating Pill Navbar ═══════════════════════════════════ */
 .navbar-wrap {
   position: fixed;
-  top: 20px;
+  top: calc(20px + env(safe-area-inset-top));
+  transition: top 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   left: 50%;
   transform: translateX(-50%);
   z-index: 1000;
   width: auto;
   max-width: 95%;
+}
+
+.navbar-wrap.hidden {
+  top: -100px;
 }
 
 .navbar {
