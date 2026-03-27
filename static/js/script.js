@@ -148,20 +148,15 @@ function initNavbarScroll() {
     const navbar = document.querySelector('.navbar-wrap');
     if (!navbar) return;
     
-    let lastScrollY = window.scrollY;
-    
     window.addEventListener('scroll', () => {
         const currentScrollY = window.scrollY;
         
-        if (currentScrollY > lastScrollY && currentScrollY > 100) {
-            // Scrolling down
+        // Only show navbar when at the very top (e.g., < 50px)
+        if (currentScrollY > 50) {
             navbar.classList.add('hidden');
         } else {
-            // Scrolling up
             navbar.classList.remove('hidden');
         }
-        
-        lastScrollY = currentScrollY;
     }, { passive: true });
 }
 

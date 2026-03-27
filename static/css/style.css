@@ -1832,7 +1832,7 @@ a:hover { color: var(--pure); }
   }
   
   .module { margin-bottom: 8px; }
-  .tool-section { padding: 20px 16px; }
+  .tool-section { padding: 100px 16px 40px; }
 
   /* Tool Action Bar Optimization for Mobile */
   .tool-actions-row {
