@@ -469,22 +469,27 @@
                 </div>
             </div>
         </div>
-        <div class="mt-16" style="display:flex; justify-content:space-between; align-items:center;">
-            <div>
-                <button type="button" class="btn btn-ghost" onclick="openDrafts()"><i class="fas fa-folder-open"></i>
-                    Manage Drafts <span id="draftCount" class="badge badge-mute"
-                        style="margin-left:4px;">0</span></button>
+        <div class="mt-16 tool-actions-row">
+            <div class="tool-actions-left">
+                <button type="button" class="btn btn-ghost" onclick="openDrafts()">
+                    <i class="fas fa-folder-open"></i> Manage Drafts <span id="draftCount" class="badge badge-mute" style="margin-left:4px;">0</span>
+                </button>
             </div>
-            <div style="display:flex; justify-content:flex-end; gap:12px; align-items:center;">
-                <button type="button" class="btn btn-ghost" onclick="openSaveDraftModal()"><i class="fas fa-save"></i>
-                    Save Draft</button>
-                <div style="width:1px; height:24px; background:var(--border); margin:0 4px;"></div>
-                <button type="button" class="btn btn-ghost" onclick="openForge()"
-                    style="border: 1px solid var(--border);"><i class="fas fa-hammer"></i> Forge Template</button>
-                <div style="width:1px; height:24px; background:var(--border); margin:0 4px;"></div>
-                <button type="button" class="btn btn-ghost" onclick="openEmailPreview()"><i class="fas fa-eye"></i>
-                    Preview</button>
-                <button type="submit" class="btn btn-white btn-lg"><i class="fas fa-paper-plane"></i> Send</button>
+            <div class="tool-actions-right">
+                <button type="button" class="btn btn-ghost" onclick="openSaveDraftModal()">
+                    <i class="fas fa-save"></i> Save Draft
+                </button>
+                <div class="desktop-sep"></div>
+                <button type="button" class="btn btn-ghost" onclick="openForge()" style="border: 1px solid var(--border);">
+                    <i class="fas fa-hammer"></i> Forge Template
+                </button>
+                <div class="desktop-sep"></div>
+                <button type="button" class="btn btn-ghost" onclick="openEmailPreview()">
+                    <i class="fas fa-eye"></i> Preview
+                </button>
+                <button type="submit" class="btn btn-white btn-lg" id="sendEmailBtn">
+                    <i class="fas fa-paper-plane"></i> Send
+                </button>
             </div>
         </div>
 

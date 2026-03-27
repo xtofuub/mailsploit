@@ -36,7 +36,7 @@ import hashlib
 import requests
 
 app = Flask(__name__)
-app.secret_key = 'your-secret-key-here'  # Change this in production
+app.secret_key = os.environ.get('SECRET_KEY', 'default-dev-key')  # Use env var in production
 
 # Configuration
 # Vercel's filesystem is read-only, only /tmp/ is writable
@@ -634,23 +634,30 @@ def check_dkim_records(domain, selectors=None):
     try:
         for selector in selectors:
             dkim_domain = f"{selector}._domainkey.{domain}"
+            dkim_records_text = []
+            
+            # Try standard resolver first
             try:
-                dkim_records = resolver.resolve(dkim_domain, 'TXT')
-                for record in dkim_records:
-                    record_text = str(record).strip('"')
-                    if 'k=' in record_text or 'p=' in record_text:
-                        # Parse DKIM record
-                        dkim_data = parse_dkim_record(record_text)
-                        dkim_data['selector'] = selector
-                        dkim_data['record'] = record_text
-                        analysis['selectors_found'].append(dkim_data)
-                        analysis['total_keys'] += 1
-                        
-                        if dkim_data.get('valid', False):
-                            analysis['valid_keys'] += 1
-                        break
-            except dns.exception.DNSException:
-                continue
+                answers = resolver.resolve(dkim_domain, 'TXT')
+                dkim_records_text = [str(r).strip('"') for r in answers]
+            except (dns.resolver.NoAnswer, dns.resolver.NXDOMAIN, dns.resolver.Timeout):
+                # Fallback to DoH
+                dkim_records_text = resolve_txt_doh(dkim_domain)
+            except Exception:
+                pass
+                
+            for record_text in dkim_records_text:
+                if 'k=' in record_text or 'p=' in record_text:
+                    # Parse DKIM record
+                    dkim_data = parse_dkim_record(record_text)
+                    dkim_data['selector'] = selector
+                    dkim_data['record'] = record_text
+                    analysis['selectors_found'].append(dkim_data)
+                    analysis['total_keys'] += 1
+                    
+                    if dkim_data.get('valid', False):
+                        analysis['valid_keys'] += 1
+                    break
         
         # Generate summary
         if analysis['selectors_found']:

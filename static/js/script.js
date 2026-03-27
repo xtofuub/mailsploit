@@ -1,8 +1,18 @@
 /* Mailsploit — Monochrome UI Logic */
 
 // ── Navigation ────────────────────────────────────────────
+function closeMobileMenu() {
+    const overlay = document.getElementById('sheet-overlay');
+    const content = document.getElementById('sheet-content');
+    if (overlay) overlay.classList.remove('show');
+    if (content) content.classList.remove('show');
+    document.body.style.overflow = '';
+}
+
 function goHome() {
     const el = document.getElementById('section-home');
+    closeMobileMenu();
+    
     if (el) {
         document.querySelectorAll('.tool-section').forEach(s => s.classList.remove('active'));
         el.classList.add('active');
@@ -14,6 +24,8 @@ function goHome() {
 
 function scrollToSection(id) {
     const home = document.getElementById('section-home');
+    closeMobileMenu();
+
     if (home) {
         document.querySelectorAll('.tool-section').forEach(s => s.classList.remove('active'));
         home.classList.add('active');
@@ -28,6 +40,8 @@ function scrollToSection(id) {
 
 function switchSection(id) {
     const el = document.getElementById('section-' + id);
+    closeMobileMenu();
+
     if (el) {
         document.querySelectorAll('.tool-section').forEach(s => s.classList.remove('active'));
         el.classList.add('active');
@@ -396,6 +410,32 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
+
+    // Mobile Nav Toggle (Shadcn Style Sheet)
+    const navToggle = document.getElementById('nav-toggle');
+    const sheetOverlay = document.getElementById('sheet-overlay');
+    const sheetContent = document.getElementById('sheet-content');
+    const sheetClose = document.getElementById('sheet-close');
+
+    if (navToggle && sheetOverlay && sheetContent) {
+        const openMenu = () => {
+            sheetOverlay.classList.add('show');
+            sheetContent.classList.add('show');
+            document.body.style.overflow = 'hidden'; 
+        };
+
+        const closeMenu = () => {
+            sheetOverlay.classList.remove('show');
+            sheetContent.classList.remove('show');
+            document.body.style.overflow = '';
+        };
+
+        navToggle.addEventListener('click', openMenu);
+        if (sheetClose) sheetClose.addEventListener('click', closeMenu);
+        sheetOverlay.addEventListener('click', (e) => {
+            if (e.target === sheetOverlay) closeMenu();
+        });
+    }
 
     // Handle initial hash for section switching (e.g. from features page)
     const hash = window.location.hash;
@@ -827,13 +867,61 @@ function renderMultiRecon(res) {
 
 function renderDKIM(a) {
     const ad = document.getElementById('dkimAnalysis');
-    ad.innerHTML = `<div class="module"><div class="module-head">DKIM: ${a.domain} — ${a.selectors_found.length} found</div>
+    const rd = document.getElementById('dkimResults');
+    if (rd) rd.style.display = 'block';
+    
+    let html = `<div class="module">
+        <div class="module-head" style="display:flex; justify-content:space-between; align-items:center;">
+            <span>DKIM Audit: ${a.domain}</span>
+            <span class="badge ${a.valid_keys > 0 ? 'badge-ok' : 'badge-fail'}">
+                ${a.valid_keys}/${a.selectors_found.length} Valid
+            </span>
+        </div>
         <div class="module-body">
-            ${a.selectors_found.length ? '<table class="data-table"><thead><tr><th>Selector</th><th>Valid</th></tr></thead><tbody>' +
-            a.selectors_found.map(s => `<tr><td>${s.selector}</td><td><span class="badge ${s.valid ? 'badge-ok' : 'badge-fail'}">${s.valid ? 'PASS' : 'FAIL'}</span></td></tr>`).join('') +
-            '</tbody></table>' : '<div class="badge badge-warn">No selectors found</div>'}
-            <div style="margin-top:12px;font-size:11px;color:var(--muted);">${a.summary}</div>
-        </div></div>`;
+            <div style="font-size:12px; color:var(--soft); margin-bottom:12px;">${a.summary}</div>
+            
+            ${a.selectors_found.length ? `
+                <table class="data-table">
+                    <thead>
+                        <tr><th>Selector</th><th>Record / Key Info</th><th>Status</th></tr>
+                    </thead>
+                    <tbody>
+                        ${a.selectors_found.map(s => `
+                            <tr>
+                                <td style="font-weight:700;">${s.selector}</td>
+                                <td>
+                                    <div style="font-size:10px; color:var(--muted); max-width:300px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${s.record}">
+                                        ${s.record}
+                                    </div>
+                                    <div style="font-size:10px; margin-top:4px;">
+                                        Type: ${s.key_type || 'RSA'} | Alg: ${s.algorithm || 'sha256'}
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge ${s.valid ? 'badge-ok' : 'badge-fail'}">
+                                        ${s.valid ? 'PASS' : 'FAIL'}
+                                    </span>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            ` : `
+                <div class="alert-bar warn">
+                    <i class="fas fa-exclamation-triangle"></i> No DKIM selectors found for this domain. 
+                    Try entering a common selector like 'google' or 'default' manually.
+                </div>
+            `}
+            
+            ${a.recommendations.length ? `
+                <div style="margin-top:16px; padding-top:12px; border-top:1px solid var(--border);">
+                    <div style="font-size:11px; font-weight:700; color:var(--muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.05em;">Recommendations</div>
+                    ${a.recommendations.map(r => `<div style="font-size:12px; color:var(--soft); margin-bottom:4px;">• ${r}</div>`).join('')}
+                </div>
+            ` : ''}
+        </div>
+    </div>`;
+    ad.innerHTML = html;
 }
 
 function renderHeaders(a) {
