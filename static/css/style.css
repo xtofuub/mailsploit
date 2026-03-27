@@ -2114,3 +2114,9 @@ a:hover { color: var(--pure); }
     outline: 1px solid var(--soft);
     outline-offset: 2px;
 }
+
+@media (max-width: 768px) {
+  .navbar-wrap {
+    top: calc(40px + env(safe-area-inset-top));
+  }
+}
