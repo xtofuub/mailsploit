@@ -2117,6 +2117,6 @@ a:hover { color: var(--pure); }
 
 @media (max-width: 768px) {
   .navbar-wrap {
-    top: calc(40px + env(safe-area-inset-top));
+    top: calc(12px + env(safe-area-inset-top));
   }
 }
