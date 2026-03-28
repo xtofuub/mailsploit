@@ -35,20 +35,20 @@ from datetime import datetime
 import hashlib
 import requests
 
-app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'default-dev-key')  # Use env var in production
+app = Flask(__name__, template_folder='../templates', static_folder='../static')
+app.secret_key = 'your-secret-key-here'  # Change this in production
 
 # Configuration
-# Vercel's filesystem is read-only, only /tmp/ is writable
-if os.environ.get('VERCEL'):
-    UPLOAD_FOLDER = '/tmp'
-else:
-    UPLOAD_FOLDER = 'uploads'
-    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
+UPLOAD_FOLDER = '/tmp/uploads'
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'doc', 'docx'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+
+# Create upload directory if it doesn't exist
+try:
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+except Exception:
+    pass
 
 class EmailSpoofer:
     def __init__(self, smtp_server, smtp_port, username, password, debug_level=0):
@@ -411,45 +411,6 @@ def test_smtp_server(server_info, validate_send=False, test_recipient=None):
     except Exception as e:
         return (server_info, False, str(e))
 
-
-TURBOSMTP_API_URL = 'https://api.turbo-smtp.com/api/v2/mail/send'
-
-def send_via_turbosmtp(consumer_key, consumer_secret, payload):
-    """
-    Send an email via the TurboSMTP REST API.
-
-    Args:
-        consumer_key (str): TurboSMTP Consumer Key.
-        consumer_secret (str): TurboSMTP Consumer Secret.
-        payload (dict): JSON body conforming to the TurboSMTP /mail/send schema.
-
-    Returns:
-        tuple: (success: bool, message: str)
-    """
-    headers = {
-        'consumerKey': consumer_key,
-        'consumerSecret': consumer_secret,
-        'Content-Type': 'application/json',
-    }
-    try:
-        resp = requests.post(TURBOSMTP_API_URL, json=payload, headers=headers, timeout=30)
-        if resp.status_code == 200:
-            data = resp.json()
-            mid = data.get('mid', '')
-            return (True, f"Email accepted by TurboSMTP (mid: {mid})")
-        else:
-            try:
-                err_data = resp.json()
-                errors = err_data.get('errors', [])
-                msg = err_data.get('message', resp.text)
-                if errors:
-                    msg = msg + ': ' + '; '.join(errors)
-            except Exception:
-                msg = resp.text or f'HTTP {resp.status_code}'
-            return (False, f"TurboSMTP API error {resp.status_code}: {msg}")
-    except Exception as exc:
-        return (False, str(exc))
-
 # Common public DNS resolvers for reliable fallback
 PUBLIC_DNS_RESOLVERS = ['8.8.8.8', '1.1.1.1', '8.8.4.4', '1.0.0.1']
 
@@ -460,27 +421,6 @@ def get_dns_resolver():
     r.timeout = 5
     r.lifetime = 10
     return r
-
-def resolve_doh(domain, record_type='A'):
-    """Generic DoH resolver to bypass local UDP 53 blocks"""
-    type_map = {'A': 1, 'CNAME': 5, 'TXT': 16}
-    type_code = type_map.get(record_type.upper(), 1)
-    url = f"https://dns.google/resolve?name={domain}&type={type_code}"
-    try:
-        response = requests.get(url, timeout=3)
-        if response.status_code == 200:
-            data = response.json()
-            if data.get('Status') == 0 and 'Answer' in data:
-                if type_code == 16:
-                    return [ans['data'].strip('"') for ans in data['Answer'] if ans['type'] == 16]
-                return [ans['data'] for ans in data['Answer'] if ans['type'] == type_code]
-    except Exception:
-        pass
-    return []
-
-def resolve_txt_doh(domain):
-    """Legacy wrapper for TXT records"""
-    return resolve_doh(domain, 'TXT')
 
 def check_domain_spoofing(domain):
     """
@@ -511,75 +451,86 @@ def check_domain_spoofing(domain):
     resolver = get_dns_resolver()
     
     try:
-        # Check SPF record via DoH
-        spf_records = resolve_txt_doh(domain)
-        for record_text in spf_records:
-            if record_text.startswith('v=spf1'):
-                analysis['spf']['status'] = 'present'
-                analysis['spf']['record'] = record_text
-                # Check for strict/moderate qualifiers
-                if '-all' in record_text or '~all' in record_text:
-                    analysis['spf']['vulnerable'] = False
-                break
+        # Check SPF record
+        try:
+            spf_records = resolver.resolve(domain, 'TXT')
+            for record in spf_records:
+                record_text = str(record).strip('"')
+                if record_text.startswith('v=spf1'):
+                    analysis['spf']['status'] = 'present'
+                    analysis['spf']['record'] = record_text
+                    # Check for strict/moderate qualifiers
+                    if '-all' in record_text or '~all' in record_text:
+                        analysis['spf']['vulnerable'] = False
+                    break
+        except (dns.resolver.NoAnswer, dns.resolver.NXDOMAIN, dns.exception.Timeout):
+            pass
+        except Exception:
+            pass
         
-        # Check DMARC record (tree walk for subdomains) via DoH
-        domain_parts = domain.split('.')
-        dmarc_found = False
-        
-        for i in range(len(domain_parts) - 1):
-            check_domain = '.'.join(domain_parts[i:])
-            dmarc_records = resolve_txt_doh(f'_dmarc.{check_domain}')
-            for record_text in dmarc_records:
+        # Check DMARC record
+        try:
+            dmarc_records = resolver.resolve(f'_dmarc.{domain}', 'TXT')
+            for record in dmarc_records:
+                record_text = str(record).strip('"')
                 if record_text.startswith('v=DMARC1'):
                     analysis['dmarc']['status'] = 'present'
-                    if not dmarc_found:
-                        analysis['dmarc']['record'] = record_text + (f' (inherited from {check_domain})' if domain != check_domain else '')
-                    dmarc_found = True
+                    analysis['dmarc']['record'] = record_text
 
+                    # Normalize lowercase for parsing
                     record_lower = record_text.lower()
                     
-                    # Parse policies
-                    p_policy = 'unknown'
-                    if 'p=quarantine' in record_lower: p_policy = 'quarantine'
-                    elif 'p=reject' in record_lower: p_policy = 'reject'
-                    elif 'p=none' in record_lower: p_policy = 'none'
+                    # Parse DMARC policy (p=)
+                    if 'p=quarantine' in record_lower:
+                        analysis['dmarc']['policy'] = 'quarantine'
+                        analysis['dmarc']['vulnerable'] = False
+                    elif 'p=reject' in record_lower:
+                        analysis['dmarc']['policy'] = 'reject'
+                        analysis['dmarc']['vulnerable'] = False
+                    elif 'p=none' in record_lower:
+                        analysis['dmarc']['policy'] = 'none'
+                        analysis['dmarc']['vulnerable'] = True
+                    else:
+                        analysis['dmarc']['policy'] = 'unknown'
+                        analysis['dmarc']['vulnerable'] = True
 
-                    sp_policy = p_policy
-                    if 'sp=quarantine' in record_lower: sp_policy = 'quarantine'
-                    elif 'sp=reject' in record_lower: sp_policy = 'reject'
-                    elif 'sp=none' in record_lower: sp_policy = 'none'
-
-                    is_inherited = (domain != check_domain)
-                    effective_policy = sp_policy if is_inherited else p_policy
-
-                    analysis['dmarc']['policy'] = effective_policy
-                    analysis['dmarc']['vulnerable'] = effective_policy not in ['quarantine', 'reject']
-                    
-                    analysis['dmarc']['subdomain_policy'] = sp_policy
-                    analysis['dmarc']['subdomain_vulnerable'] = sp_policy not in ['quarantine', 'reject']
+                    # Parse subdomain policy (sp=). If absent, DMARC inherits p= for subdomains.
+                    if 'sp=quarantine' in record_lower:
+                        analysis['dmarc']['subdomain_policy'] = 'quarantine'
+                        analysis['dmarc']['subdomain_vulnerable'] = False
+                    elif 'sp=reject' in record_lower:
+                        analysis['dmarc']['subdomain_policy'] = 'reject'
+                        analysis['dmarc']['subdomain_vulnerable'] = False
+                    elif 'sp=none' in record_lower:
+                        analysis['dmarc']['subdomain_policy'] = 'none'
+                        analysis['dmarc']['subdomain_vulnerable'] = True
+                    else:
+                        # Inherit primary policy
+                        analysis['dmarc']['subdomain_policy'] = analysis['dmarc']['policy']
+                        analysis['dmarc']['subdomain_vulnerable'] = analysis['dmarc']['vulnerable']
                     break
-            
-            if dmarc_found:
-                break
-
+        except (dns.resolver.NoAnswer, dns.resolver.NXDOMAIN, dns.exception.Timeout):
+            pass
+        except Exception:
+            pass
         
         # Determine overall status
         if analysis['dmarc']['status'] != 'present':
             analysis['overall_status'] = 'vulnerable'
             analysis['summary'] = 'Domain lacks a DMARC record and is vulnerable to email spoofing.'
-        elif analysis['spf']['status'] != 'present':
-            analysis['overall_status'] = 'partially_secure'
-            analysis['summary'] = 'Domain has a DMARC record but lacks an SPF record.'
-        elif not analysis['dmarc']['vulnerable']:
+        elif analysis['spf']['status'] == 'present' and not analysis['dmarc']['vulnerable']:
             analysis['overall_status'] = 'secure'
             analysis['summary'] = 'Domain has proper SPF and DMARC records configured.'
-        else:
+        elif analysis['spf']['status'] == 'present':
             analysis['overall_status'] = 'vulnerable'
             analysis['summary'] = 'Domain has SPF but DMARC policy is none, making it vulnerable.'
+        else:
+            analysis['overall_status'] = 'vulnerable'
+            analysis['summary'] = 'Domain lacks proper SPF records and DMARC is vulnerable to spoofing.'
 
         # If subdomains are spoofable, downgrade overall status to potentially spoofable
         if analysis['dmarc']['status'] == 'present' and analysis['dmarc'].get('subdomain_vulnerable'):
-            analysis['overall_status'] = 'vulnerable' 
+            analysis['overall_status'] = 'vulnerable'
             # Ensure summary mentions subdomain risk
             extra_note = ' Subdomains may be spoofable due to DMARC subdomain policy (sp).' 
             if extra_note.strip() not in analysis['summary']:
@@ -639,30 +590,23 @@ def check_dkim_records(domain, selectors=None):
     try:
         for selector in selectors:
             dkim_domain = f"{selector}._domainkey.{domain}"
-            dkim_records_text = []
-            
-            # Try standard resolver first
             try:
-                answers = resolver.resolve(dkim_domain, 'TXT')
-                dkim_records_text = [str(r).strip('"') for r in answers]
-            except (dns.resolver.NoAnswer, dns.resolver.NXDOMAIN, dns.resolver.Timeout):
-                # Fallback to DoH
-                dkim_records_text = resolve_txt_doh(dkim_domain)
-            except Exception:
-                pass
-                
-            for record_text in dkim_records_text:
-                if 'k=' in record_text or 'p=' in record_text:
-                    # Parse DKIM record
-                    dkim_data = parse_dkim_record(record_text)
-                    dkim_data['selector'] = selector
-                    dkim_data['record'] = record_text
-                    analysis['selectors_found'].append(dkim_data)
-                    analysis['total_keys'] += 1
-                    
-                    if dkim_data.get('valid', False):
-                        analysis['valid_keys'] += 1
-                    break
+                dkim_records = resolver.resolve(dkim_domain, 'TXT')
+                for record in dkim_records:
+                    record_text = str(record).strip('"')
+                    if 'k=' in record_text or 'p=' in record_text:
+                        # Parse DKIM record
+                        dkim_data = parse_dkim_record(record_text)
+                        dkim_data['selector'] = selector
+                        dkim_data['record'] = record_text
+                        analysis['selectors_found'].append(dkim_data)
+                        analysis['total_keys'] += 1
+                        
+                        if dkim_data.get('valid', False):
+                            analysis['valid_keys'] += 1
+                        break
+            except dns.exception.DNSException:
+                continue
         
         # Generate summary
         if analysis['selectors_found']:
@@ -995,205 +939,103 @@ def features():
     """Dedicated Features Landing Page"""
     return render_template('features.html')
 
-def send_via_api(consumer_key, consumer_secret, payload):
-    """Generic REST API email sender (rebranded)"""
-    import requests
-    url = "https://api.eu.turbo-smtp.com/api/v2/mail/send"
-    headers = {
-        "consumerKey": consumer_key,
-        "consumerSecret": consumer_secret,
-        "Content-Type": "application/json"
-    }
-    try:
-        response = requests.post(url, json=payload, headers=headers, timeout=20)
-        if response.status_code in [200, 201, 202]:
-            return True, "Email sent successfully via API"
-        else:
-            try:
-                err_data = response.json()
-                err = err_data.get('message') or err_data.get('error') or response.text
-            except Exception:
-                err = response.text
-            return False, f"API error {response.status_code}: {err}"
-    except Exception as e:
-        return False, f"API connection error: {str(e)}"
-
 @app.route('/send_email', methods=['POST'])
 def send_email():
-    """Send email via API or SMTP depending on send_mode"""
+    """Send spoofed email"""
     try:
         payload = _get_request_payload()
-        send_mode = (payload.get('send_mode') or 'smtp').strip().lower()
 
-        # Sender identity
+        smtp_server = (payload.get('smtp_server') or '').strip()
+        smtp_port = _safe_int(payload.get('smtp_port', 25), 25)
+        username = (payload.get('username') or '').strip()
+        password = payload.get('password') or ''
         from_name = (payload.get('from_name') or '').strip()
         from_email = (payload.get('from_email') or '').strip()
         reply_to = (payload.get('reply_to') or '').strip()
-        envelope_sender = (payload.get('envelope_sender') or '').strip()
-
-        # Recipients
         to_email = (payload.get('to_email') or '').strip()
         cc = (payload.get('cc') or '').strip()
         bcc = (payload.get('bcc') or '').strip()
-
-        # Message
         subject = payload.get('subject', '')
         message = payload.get('message', '')
         html = _parse_bool(payload.get('html'))
         add_xheaders = _parse_bool(payload.get('add_xheaders'))
-
-        # Send count
-        send_count = _safe_int(payload.get('send_count', 1), 1)
-        send_count = max(1, min(100, send_count))
-
+        
+        # Sender identity fallbacks
+        envelope_sender = (payload.get('envelope_sender') or '').strip()
         if not envelope_sender:
             envelope_sender = from_email
-
-        if not all([from_email, to_email]):
-            return jsonify({'success': False, 'error': 'Missing From Email or To fields'})
-
-        # ── API MODE ──────────────────────────────────────
-        if send_mode == 'api':
-            consumer_key = (payload.get('consumer_key') or '').strip()
-            consumer_secret = (payload.get('consumer_secret') or '').strip()
-
-            if not all([consumer_key, consumer_secret]):
-                return jsonify({'success': False, 'error': 'Missing API Consumer Key or Consumer Secret'})
-
-            # Handle IDN (homoglyphs) for the API by encoding the domain as Punycode
-            if '@' in from_email:
-                u, d = from_email.rsplit('@', 1)
-                try:
-                    from_email_encoded = f"{u}@{d.encode('idna').decode('ascii')}"
-                except Exception:
-                    from_email_encoded = from_email
+        send_count = _safe_int(payload.get('send_count', 1), 1)
+        send_count = max(1, min(100, send_count))
+        
+        # Validate required fields
+        if not all([smtp_server, username, password, from_name, from_email, to_email]):
+            return jsonify({'success': False, 'error': 'Missing required fields'})
+        
+        # Parse recipients
+        to_list = [email.strip() for email in to_email.split(',') if email.strip()]
+        cc_list = [email.strip() for email in cc.split(',') if email.strip()] if cc else None
+        bcc_list = [email.strip() for email in bcc.split(',') if email.strip()] if bcc else None
+        
+        # Handle file attachments
+        attachments = []
+        if 'attachments' in request.files:
+            files = request.files.getlist('attachments')
+            for file in files:
+                if file and file.filename and allowed_file(file.filename):
+                    filename = secure_filename(file.filename)
+                    file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                    file.save(file_path)
+                    attachments.append(file_path)
+        
+        # Create spoofer instance
+        spoofer = EmailSpoofer(smtp_server, smtp_port, username, password)
+        
+        # Get all recipients for sending
+        all_recipients = to_list[:]
+        if cc_list:
+            all_recipients.extend(cc_list)
+        if bcc_list:
+            all_recipients.extend(bcc_list)
+        
+        # Send email multiple times if requested
+        send_success = 0
+        last_error = None
+        for i in range(send_count):
+            msg = spoofer.create_message(
+                from_name,
+                from_email,
+                reply_to if reply_to else None,
+                to_list,
+                cc_list,
+                None,
+                subject,
+                message,
+                html,
+                attachments if attachments else None
+            )
+            if add_xheaders:
+                msg = spoofer.spoof_x_headers(msg)
+            success, error_msg = spoofer.send_email(msg, all_recipients, envelope_sender=envelope_sender)
+            if success:
+                send_success += 1
             else:
-                from_email_encoded = from_email
-
-            from_header = f"{from_name} <{from_email_encoded}>" if from_name else from_email_encoded
-
-            # Handle attachments — base64-encode for the API
-            attachment_list = []
-            saved_paths = []
-            if 'attachments' in request.files:
-                files = request.files.getlist('attachments')
-                for file in files:
-                    if file and file.filename and allowed_file(file.filename):
-                        filename = secure_filename(file.filename)
-                        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                        file.save(file_path)
-                        saved_paths.append(file_path)
-                        with open(file_path, 'rb') as f:
-                            encoded = base64.b64encode(f.read()).decode('utf-8')
-                        import mimetypes
-                        mime_type = mimetypes.guess_type(filename)[0] or 'application/octet-stream'
-                        attachment_list.append({
-                            'content': encoded,
-                            'name': filename,
-                            'type': mime_type,
-                        })
-
-            api_payload = {
-                'from': from_header,
-                'to': to_email,
-                'subject': subject,
-                'content': message, # Always provide a text version for deliverability
-            }
-            if html:
-                api_payload['html_content'] = message
-            
-            if cc:
-                api_payload['cc'] = cc
-            if bcc:
-                api_payload['bcc'] = bcc
-            if reply_to:
-                # Add Reply-To via custom_headers as it's not a top-level field in V2
-                api_payload['custom_headers'] = [{'header': 'Reply-To', 'value': reply_to}]
-            if attachment_list:
-                api_payload['attachments'] = attachment_list
-
-            send_success = 0
-            last_error = None
-            for _ in range(send_count):
-                success, msg = send_via_api(consumer_key, consumer_secret, api_payload)
-                if success:
-                    send_success += 1
-                else:
-                    last_error = msg
-
-            for path in saved_paths:
-                try:
-                    os.remove(path)
-                except Exception:
-                    pass
-
-        # ── SMTP MODE ─────────────────────────────────────
-        else:
-            smtp_server = (payload.get('smtp_server') or '').strip()
-            smtp_port = _safe_int(payload.get('smtp_port', 587), 587)
-            username = (payload.get('username') or '').strip()
-            password = payload.get('password') or ''
-
-            if not all([smtp_server, username, password]):
-                return jsonify({'success': False, 'error': 'Missing SMTP Server, Username, or Password'})
-
-            if not envelope_sender:
-                envelope_sender = from_email
-
-            to_list = [e.strip() for e in to_email.split(',') if e.strip()]
-            cc_list = [e.strip() for e in cc.split(',') if e.strip()] if cc else None
-            bcc_list = [e.strip() for e in bcc.split(',') if e.strip()] if bcc else None
-
-            attachments = []
-            if 'attachments' in request.files:
-                files = request.files.getlist('attachments')
-                for file in files:
-                    if file and file.filename and allowed_file(file.filename):
-                        filename = secure_filename(file.filename)
-                        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                        file.save(file_path)
-                        attachments.append(file_path)
-
-            send_success = 0
-            last_error = None
-            spoofer = EmailSpoofer(smtp_server, smtp_port, username, password)
-
-            all_recipients = to_list[:]
-            if cc_list:
-                all_recipients.extend(cc_list)
-            if bcc_list:
-                all_recipients.extend(bcc_list)
-
-            for _ in range(send_count):
-                msg = spoofer.create_message(
-                    from_name, from_email,
-                    reply_to if reply_to else None,
-                    to_list, cc_list, None,
-                    subject, message, html,
-                    attachments if attachments else None
-                )
-                if add_xheaders:
-                    msg = spoofer.spoof_x_headers(msg)
-                success, error_msg = spoofer.send_email(msg, all_recipients, envelope_sender=envelope_sender)
-                if success:
-                    send_success += 1
-                else:
-                    last_error = error_msg
-
-            for attachment in attachments:
-                try:
-                    os.remove(attachment)
-                except Exception:
-                    pass
-
-        # ── Result ────────────────────────────────────────
+                last_error = error_msg
+        
+        
+        # Clean up uploaded files
+        for attachment in attachments:
+            try:
+                os.remove(attachment)
+            except:
+                pass
+        
         if send_success == send_count:
             return jsonify({'success': True, 'message': f'Email sent successfully ({send_success}/{send_count})'})
         elif send_success > 0:
-            return jsonify({'success': True, 'message': f'Partial success: sent {send_success}/{send_count}. Last error: {last_error or "unknown"}'})
+            return jsonify({'success': True, 'message': f'Partial success: sent {send_success}/{send_count}. Last error: {last_error or 'unknown'}'})
         else:
             return jsonify({'success': False, 'error': last_error or 'Failed to send email'})
-
+            
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
@@ -1341,112 +1183,32 @@ def analyze_headers():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
-import re as _re
-_VALID_DOMAIN_RE = _re.compile(r'^(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(\.[a-zA-Z0-9-]{1,63})*\.[a-zA-Z]{2,}$')
-
-def _is_valid_subdomain(name, parent_domain):
-    """Validate that a crt.sh name_value entry is a real subdomain."""
-    if not name or '@' in name or ' ' in name or '*' in name:
-        return False
-    if not (name == parent_domain or name.endswith('.' + parent_domain)):
-        return False
-    return bool(_VALID_DOMAIN_RE.match(name))
-
 @app.route('/check_multiple_domains', methods=['POST'])
-def check_multiple_domains():
+def check_multiple_domains_endpoint():
     """Check multiple domains for spoofing vulnerability"""
     try:
         data = request.get_json()
-        domains_str = data.get('domains', '').strip()
-        scan_subdomains = data.get('scan_subdomains', False)
+        domains_text = data.get('domains', '').strip()
         
-        if not domains_str:
+        if not domains_text:
             return jsonify({'success': False, 'error': 'Domain list is required'})
         
         # Parse domains (one per line or comma-separated)
-        domain_list = []
-        for line in domains_str.replace(',', '\n').split('\n'):
+        domains_list = []
+        for line in domains_text.replace(',', '\n').split('\n'):
             domain = line.strip()
             if domain:
-                domain_list.append(domain)
+                domains_list.append(domain)
         
-        if not domain_list:
+        if not domains_list:
             return jsonify({'success': False, 'error': 'No valid domains found'})
         
-        crt_error = None
-        all_domains = set(domain_list)
-        if scan_subdomains:
-            for domain in domain_list:
-                try:
-                    url = f"https://crt.sh/?q=%.{domain}&output=json"
-                    response = requests.get(url, timeout=10)
-                    if response.status_code == 200:
-                        for entry in response.json():
-                            names = entry.get('name_value', '').split('\n')
-                            for name in names:
-                                clean_name = name.replace('*.', '').strip().lower()
-                                if _is_valid_subdomain(clean_name, domain):
-                                    all_domains.add(clean_name)
-                    else:
-                        raise Exception(f"status {response.status_code}")
-                except Exception as e:
-                    # Fallback to hacker target API if crt.sh fails
-                    try:
-                        url = f"https://api.hackertarget.com/hostsearch/?q={domain}"
-                        response = requests.get(url, timeout=10)
-                        if response.status_code == 200:
-                            for line in response.text.split('\n'):
-                                if ',' in line:
-                                    subdomain = line.split(',')[0].strip().lower()
-                                    if subdomain.endswith(domain):
-                                        all_domains.add(subdomain)
-                        else:
-                            crt_error = f"APIs unavailable (crt.sh & hackertarget). Missing subdomains."
-                    except Exception as e2:
-                        crt_error = f"APIs timed out (crt.sh & hackertarget). Missing subdomains."
-                    
-        all_domains = list(all_domains)
-        
         # Check domains
-        results = []
-        secure_count = 0
-        partially_secure_count = 0
-        vulnerable_count = 0
+        results = check_multiple_domains(domains_list)
         
-        for domain in all_domains:
-            try:
-                analysis = check_domain_spoofing(domain)
-                results.append(analysis)
-                
-                if analysis['overall_status'] == 'secure':
-                    secure_count += 1
-                elif analysis['overall_status'] == 'partially_secure':
-                    partially_secure_count += 1
-                else:
-                    vulnerable_count += 1
-                    
-            except Exception as e:
-                # Log error but continue with other domains
-                results.append({
-                    'domain': domain,
-                    'error': str(e),
-                    'overall_status': 'error'
-                })
-        
-        summary_text = f"Checked {len(all_domains)} domains: {secure_count} secure, {partially_secure_count} potentially spoofable, {vulnerable_count} vulnerable"
-        if crt_error:
-            summary_text += f" (WARNING: {crt_error})"
-            
         return jsonify({
             'success': True,
-            'results': results,
-            'summary': {
-                'total_checked': len(all_domains),
-                'secure_count': secure_count,
-                'partially_secure_count': partially_secure_count,
-                'vulnerable_count': vulnerable_count,
-                'crt_error': crt_error
-            }
+            'results': results
         })
         
     except Exception as e:
@@ -1771,8 +1533,8 @@ def intel_subdomain():
             for entry in ct_data:
                 names = entry.get('name_value', '').split('\n')
                 for name in names:
-                    clean_name = name.replace('*.', '').strip().lower()
-                    if _is_valid_subdomain(clean_name, domain):
+                    clean_name = name.replace('*.', '').strip()
+                    if clean_name.endswith(domain):
                         subdomains.add(clean_name)
             
             # Enrich with DNS data concurrently
@@ -1781,32 +1543,40 @@ def intel_subdomain():
             def enrich_subdomain(sub):
                 res = {"subdomain": sub, "records": {}, "security": {"protected": False}}
                 
-                # Check A record via DoH
-                a_rec = resolve_doh(sub, 'A')
-                if a_rec:
-                    res["records"]["A"] = a_rec
+                # Check A record
+                try:
+                    a_rec = dns.resolver.resolve(sub, 'A')
+                    res["records"]["A"] = [str(r) for r in a_rec]
+                except: pass
                 
-                # Check CNAME via DoH
-                cname_rec = resolve_doh(sub, 'CNAME')
-                if cname_rec:
-                    res["records"]["CNAME"] = cname_rec
+                # Check CNAME
+                try:
+                    cname_rec = dns.resolver.resolve(sub, 'CNAME')
+                    res["records"]["CNAME"] = [str(r) for r in cname_rec]
+                except: pass
                 
-                # Check SPF via DoH
-                spf_txt = resolve_doh(sub, 'TXT')
-                for txt in spf_txt:
-                    if txt.startswith('v=spf1'):
-                        res["records"]["SPF"] = txt
-                        break
+                # Check SPF
+                try:
+                    spf_txt = dns.resolver.resolve(sub, 'TXT')
+                    for r in spf_txt:
+                        txt = str(r).strip('"')
+                        if txt.startswith('v=spf1'):
+                            res["records"]["SPF"] = txt
+                            break
+                except: pass
                 
-                # Check DMARC via DoH
-                dmarc_txt = resolve_doh(f'_dmarc.{sub}', 'TXT')
-                for txt in dmarc_txt:
-                    if txt.startswith('v=DMARC1'):
-                        res["records"]["DMARC"] = txt
-                        # Flag as protected if policy is reject or quarantine
-                        if 'p=reject' in txt.lower() or 'p=quarantine' in txt.lower():
-                            res["security"]["protected"] = True
-                        break
+                # Check DMARC
+                try:
+                    dmarc_txt = dns.resolver.resolve(f'_dmarc.{sub}', 'TXT')
+                    for r in dmarc_txt:
+                        txt = str(r).strip('"')
+                        if txt.startswith('v=DMARC1'):
+                            res["records"]["DMARC"] = txt
+                            # Flag as protected if policy is reject or quarantine
+                            if 'p=reject' in txt.lower() or 'p=quarantine' in txt.lower():
+                                res["security"]["protected"] = True
+                            break
+                except: pass
                 
                 return res
 
@@ -1885,17 +1655,13 @@ def audit_dnsbl():
         nonlocal listed_count
         query = f"{reversed_ip}.{provider}"
         try:
-            # Use local system DNS instead of Google DoH because providers like Spamhaus block public resolvers
-            answer = socket.gethostbyname(query)
-            # 127.255.255.x error codes (e.g., .254 for public DNS, .252 for typos)
-            if answer.startswith("127.255.255."):
-                return {"provider": provider, "listed": False, "error": f"Query blocked by provider ({answer})"}
-            return {"provider": provider, "listed": True, "return_code": answer}
-        except socket.gaierror:
-            # NXDOMAIN means not listed
+            answers = dns.resolver.resolve(query, "A")
+            # If it resolves, it's listed
+            return {"provider": provider, "listed": True, "return_code": str(answers[0])}
+        except dns.resolver.NXDOMAIN:
             return {"provider": provider, "listed": False}
-        except Exception as e:
-            return {"provider": provider, "listed": False, "error": str(e)}
+        except Exception:
+            return {"provider": provider, "listed": False, "error": "Timeout or resolving error"}
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
         bl_results = list(executor.map(check_dnsbl, dnsbl_providers))
@@ -1928,8 +1694,8 @@ def update_self():
     try:
         # Check if it's a git repo
         subprocess.run(["git", "rev-parse", "--is-inside-work-tree"], check=True, capture_output=True)
-        print("\033[94m[*] Pulling latest changes from origin master...\033[0m")
-        result = subprocess.run(["git", "pull", "origin", "master"], check=True, capture_output=True, text=True)
+        print("\033[94m[*] Pulling latest changes from origin main...\033[0m")
+        result = subprocess.run(["git", "pull"], check=True, capture_output=True, text=True)
         print(result.stdout)
         print("\033[92m[+] Update complete! Please restart the application.\033[0m")
         sys.exit(0)

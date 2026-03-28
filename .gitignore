@@ -30,6 +30,11 @@ SMTP_Re-enveloping_Walkthrough.md
 smtp_reenveloping_ui_mockup_*.png
 *.webp
 *.png
+# Keeping smtp_servers.txt per user request (User: handle with care if it contains secrets)
+# smtp_servers.txt
 
+# Vercel / Now
+.vercel/
+.now/
 
 .vercel

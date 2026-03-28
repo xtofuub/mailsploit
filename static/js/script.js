@@ -472,11 +472,50 @@ document.addEventListener('DOMContentLoaded', () => {
 async function sendEmail() {
     showLoading('Sending email...');
     try {
-        const r = await fetch('/send_email', { method: 'POST', body: new FormData(document.getElementById('emailForm')) });
-        const d = await r.json(); hideLoading();
-        if (d.success) { toast('Email sent successfully', 'ok'); inc('emails'); }
-        else toast(d.error, 'fail');
-    } catch (e) { hideLoading(); toast('Error: ' + e.message, 'fail'); }
+        const form = document.getElementById('emailForm');
+        if (!form) throw new Error('Email form not found');
+
+        const formData = new FormData(form);
+        const hasAttachments = (document.getElementById('attachments')?.files?.length || 0) > 0;
+        const options = { method: 'POST', headers: { 'Accept': 'application/json' } };
+
+        if (hasAttachments) {
+            options.body = formData;
+        } else {
+            const payload = {};
+            formData.forEach((value, key) => {
+                if (typeof value === 'string') payload[key] = value;
+            });
+            options.headers['Content-Type'] = 'application/json';
+            options.body = JSON.stringify(payload);
+        }
+
+        const r = await fetch('/send_email', options);
+        const contentType = r.headers.get('content-type') || '';
+        let d = {};
+
+        if (contentType.includes('application/json')) {
+            d = await r.json();
+        } else {
+            const raw = await r.text();
+            throw new Error(`API ${r.status}: ${raw.slice(0, 160) || 'Unexpected response format'}`);
+        }
+
+        if (!r.ok) {
+            throw new Error(d.error || `API ${r.status} error`);
+        }
+
+        if (d.success) {
+            toast(d.message || 'Email sent successfully', 'ok');
+            inc('emails');
+        } else {
+            toast(d.error || 'Failed to send email', 'fail');
+        }
+    } catch (e) {
+        toast('Error: ' + e.message, 'fail');
+    } finally {
+        hideLoading();
+    }
 }
 
 async function applyHomoglyphFromEmail() {
