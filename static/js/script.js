@@ -9,6 +9,38 @@ function closeMobileMenu() {
     document.body.style.overflow = '';
 }
 
+function lockMobileViewportInteractions() {
+    if (window.__msMobileLockApplied) return;
+
+    const touchCapable = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    if (!touchCapable) return;
+
+    window.__msMobileLockApplied = true;
+    document.documentElement.classList.add('mobile-touch-lock');
+    document.body.classList.add('mobile-touch-lock');
+
+    const preventGesture = (e) => e.preventDefault();
+    const preventPinchMove = (e) => {
+        if (e.touches && e.touches.length > 1) {
+            e.preventDefault();
+        }
+    };
+
+    document.addEventListener('gesturestart', preventGesture, { passive: false });
+    document.addEventListener('gesturechange', preventGesture, { passive: false });
+    document.addEventListener('gestureend', preventGesture, { passive: false });
+    document.addEventListener('touchmove', preventPinchMove, { passive: false });
+
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', (e) => {
+        const now = Date.now();
+        if (now - lastTouchEnd <= 320) {
+            e.preventDefault();
+        }
+        lastTouchEnd = now;
+    }, { passive: false });
+}
+
 function goHome() {
     const el = document.getElementById('section-home');
     closeMobileMenu();
@@ -325,6 +357,8 @@ function loadStats() {
 
 // ── Init ──────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+    lockMobileViewportInteractions();
+
     loadStats();
 
     const forms = {
@@ -453,6 +487,17 @@ document.addEventListener('DOMContentLoaded', () => {
             if (e.target === sheetOverlay) closeMenu();
         });
     }
+
+    const saveDraftOverlay = document.getElementById('saveDraftOverlay');
+    if (saveDraftOverlay) {
+        saveDraftOverlay.addEventListener('click', (e) => {
+            if (e.target === saveDraftOverlay) closeSaveDraftModal();
+        });
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeSaveDraftModal();
+    });
 
     // Handle initial hash for section switching (e.g. from features page)
     const hash = window.location.hash;

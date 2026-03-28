@@ -1182,21 +1182,25 @@
 </div>
 
 <!-- ═══ SAVE DRAFT MODAL ═══ -->
-<div id="saveDraftOverlay" class="overlay">
-    <div class="modal" style="max-width:400px;">
-        <div class="modal-head">
-            <div class="modal-title">Save as Draft</div>
-            <div class="modal-desc">Give your current campaign a name for easy loading later.</div>
-            <button class="modal-close" onclick="closeSaveDraftModal()">&times;</button>
-        </div>
-        <div class="modal-body">
-            <div class="field">
-                <label>Draft Name</label>
-                <input type="text" id="draft_name_modal" placeholder="e.g. Q3 Phishing Campaign">
+<div id="saveDraftOverlay" class="overlay save-draft-overlay">
+    <div class="modal save-draft-modal" role="dialog" aria-modal="true" aria-labelledby="saveDraftTitle">
+        <div class="save-draft-header">
+            <div class="save-draft-header-copy">
+                <span class="save-draft-chip">Draft Manager</span>
+                <div id="saveDraftTitle" class="save-draft-title">Save Campaign Draft</div>
+                <p class="save-draft-subtitle">Give your current campaign a clean label so you can load it instantly later.</p>
             </div>
+            <button class="modal-close save-draft-close" onclick="closeSaveDraftModal()" aria-label="Close save draft modal">&times;</button>
         </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-white btn-full" onclick="confirmSaveDraft(this)">Save Campaign</button>
+        <div class="save-draft-body">
+            <label class="save-draft-label" for="draft_name_modal">Draft Name</label>
+            <input class="save-draft-input" type="text" id="draft_name_modal" placeholder="e.g. Q3 Security Campaign">
+            <p class="save-draft-hint">Tip: include the target type or month so drafts stay organized.</p>
+        </div>
+        <div class="save-draft-footer">
+            <button type="button" class="save-draft-submit" onclick="confirmSaveDraft(this)">
+                <i class="fas fa-save"></i> Save Campaign
+            </button>
         </div>
     </div>
 </div>
