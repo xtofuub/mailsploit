@@ -985,6 +985,17 @@ def _get_request_payload():
         return data
     return request.form.to_dict(flat=True)
 
+@app.route('/favicon.ico')
+@app.route('/favicon.png')
+@app.route('/apple-touch-icon.png')
+@app.route('/apple-touch-icon-precomposed.png')
+def favicon():
+    """Serve favicons from the static directory at the root level"""
+    path = request.path.lstrip('/')
+    if not path or path == 'favicon.ico':
+        return app.send_static_file('favicon.ico')
+    return app.send_static_file(path)
+
 @app.route('/')
 def index():
     """Main page"""
