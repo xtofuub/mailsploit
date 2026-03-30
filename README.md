@@ -11,6 +11,9 @@
 </div>
 
 ---
+<div style="text-align: center;">
+<img width="1478" height="983" alt="image" src="https://github.com/user-attachments/assets/cbd19b93-40bd-40d8-9e93-161d079f4f91" />
+</div>
 
 ## Executive Summary
 
