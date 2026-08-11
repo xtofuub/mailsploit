@@ -4,9 +4,18 @@
     {
       "src": "app.py",
       "use": "@vercel/python"
+    },
+    {
+      "src": "api/send_email_safe.py",
+      "use": "@vercel/python"
     }
   ],
   "routes": [
+    {
+      "src": "/send_email",
+      "methods": ["POST"],
+      "dest": "api/send_email_safe.py"
+    },
     {
       "src": "/(.*)",
       "dest": "app.py"
